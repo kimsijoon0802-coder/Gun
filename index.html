@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -107,6 +106,20 @@
         .grade-rare { color: var(--grade-rare); }
         .grade-epic { color: var(--grade-epic); }
         .grade-legendary { color: var(--grade-legendary); font-weight: bold; }
+        .grade-mythic {
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: mythic-shine 3s linear infinite;
+            font-weight: bold;
+        }
+
+        @keyframes mythic-shine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
         /* Stat Bar */
         .stat-bar-container { margin-bottom: 10px; }
@@ -167,11 +180,17 @@
             border-bottom-color: var(--secondary-color);
         }
 
-        .shop-grid, .inventory-list {
+        .shop-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
+        .inventory-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         
         .item-card {
             border: 1px solid var(--border-color);
@@ -310,7 +329,7 @@
         /* Class Selection */
         .class-selection-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
         }
         
@@ -318,6 +337,11 @@
         .dungeon-list, .dungeon-card-rewards ul {
              list-style: none;
              padding: 0;
+        }
+        .dungeon-card {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
         }
 
         /* Blacksmith */
@@ -418,6 +442,12 @@
             gap: 20px;
         }
 
+        .pet-card {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
         .pet-card.active {
              background-color: rgba(3, 218, 198, 0.2);
         }
@@ -472,7 +502,8 @@
             UNCOMMON: 'UNCOMMON',
             RARE: 'RARE',
             EPIC: 'EPIC',
-            LEGENDARY: 'LEGENDARY'
+            LEGENDARY: 'LEGENDARY',
+            MYTHIC: 'MYTHIC',
         };
 
         const ItemGradeInfo = {
@@ -480,28 +511,31 @@
             [ItemGrade.UNCOMMON]: { name: '고급', color: '#1eff00', class: 'grade-uncommon', order: 2 },
             [ItemGrade.RARE]: { name: '희귀', color: '#0070dd', class: 'grade-rare', order: 3 },
             [ItemGrade.EPIC]: { name: '영웅', color: '#a335ee', class: 'grade-epic', order: 4 },
-            [ItemGrade.LEGENDARY]: { name: '전설', color: '#ff8000', class: 'grade-legendary', order: 5 }
+            [ItemGrade.LEGENDARY]: { name: '전설', color: '#ff8000', class: 'grade-legendary', order: 5 },
+            [ItemGrade.MYTHIC]: { name: '신화', color: '#00ffff', class: 'grade-mythic', order: 6 }
         };
 
         const PlayerClasses = {
             Warrior: { name: '전사', description: '강인한 체력과 방어력을 가집니다. (최대 HP +20, 방어력 +5)', bonuses: { maxHp: 20, defense: 5, attack: 0 } },
             Archer: { name: '궁수', description: '높은 공격력과 치명타 확률을 자랑합니다. (공격력 +5, 치명타 확률 +5%)', bonuses: { attack: 5, critChance: 0.05, maxHp: 0, defense: 0 } },
+            Magician: { name: '마법사', description: '마력을 다루어 강력한 원소 공격을 합니다. (공격력 +7, 최대 HP -10)', bonuses: { attack: 7, maxHp: -10, defense: 0 } },
         };
 
         const UltimateSkills = {
             Adventurer: { name: '파워 스트라이크', description: '적에게 250%의 피해를 입힙니다.' },
             Warrior: { name: '분쇄의 일격', description: '적에게 300%의 피해를 입히고 50% 확률로 1턴 동안 기절시킵니다.' },
-            Archer: { name: '저격', description: '반드시 치명타로 적중하는 강력한 화살을 발사합니다. (기본 치명타 피해량의 200%)' }
+            Archer: { name: '저격', description: '반드시 치명타로 적중하는 강력한 화살을 발사합니다. (기본 치명타 피해량의 200%)' },
+            Magician: { name: '메테오', description: '거대한 운석을 떨어트려 적에게 400%의 막대한 피해를 입힙니다.' }
         };
 
         const PET_GACHA_COST = 500;
         const ITEM_GACHA_COST = 300;
 
-
         const allPets = [
-            { id: 1, name: '그리핀 주니어', type: 'Griffin', grade: ItemGrade.RARE, attackBonus: 5, defenseBonus: 0, skillName: '할퀴기', skillDescription: '15% 확률로 추가 피해를 입힙니다.', skillProcChance: 0.15, skillEffect: { type: 'damage', amount: 10 } },
-            { id: 2, name: '돌북이', type: 'Turtle', grade: ItemGrade.RARE, attackBonus: 0, defenseBonus: 8, skillName: '단단해지기', skillDescription: '전투 시작 시 방어력이 10% 증가합니다.', skillProcChance: 1.0 }, // Always active at start
-            { id: 3, name: '아기용', type: 'Dragon', grade: ItemGrade.EPIC, attackBonus: 10, defenseBonus: 5, skillName: '작은 불씨', skillDescription: '20% 확률로 강력한 화염 피해를 입힙니다.', skillProcChance: 0.20, skillEffect: { type: 'damage', amount: 25 } },
+            { id: 1, name: '그리핀 주니어', type: 'Griffin', grade: ItemGrade.RARE, attackBonus: 5, defenseBonus: 0, skillName: '할퀴기', skillDescription: '15% 확률로 추가 피해를 입힙니다.', skillProcChance: 0.15, skillEffect: { type: 'damage', amount: 10 }, sellPrice: 100 },
+            { id: 2, name: '돌북이', type: 'Turtle', grade: ItemGrade.RARE, attackBonus: 0, defenseBonus: 8, skillName: '단단해지기', skillDescription: '전투 시작 시 방어력이 10% 증가합니다.', skillProcChance: 1.0, sellPrice: 100 },
+            { id: 3, name: '아기용', type: 'Dragon', grade: ItemGrade.EPIC, attackBonus: 10, defenseBonus: 5, skillName: '작은 불씨', skillDescription: '20% 확률로 강력한 화염 피해를 입힙니다.', skillProcChance: 0.20, skillEffect: { type: 'damage', amount: 25 }, sellPrice: 300 },
+            { id: 4, name: '불사조', type: 'Phoenix', grade: ItemGrade.LEGENDARY, attackBonus: 25, defenseBonus: 10, skillName: '영원의 불꽃', skillDescription: '30% 확률로 영원의 불꽃을 발사하여 강력한 추가 피해를 입힙니다.', skillProcChance: 0.30, skillEffect: { type: 'damage', amount: 75 }, sellPrice: 1000 },
         ];
 
 
@@ -521,15 +555,12 @@
             { id: 11, type: ItemType.WEAPON, name: '천공의 분노', price: 12500, grade: ItemGrade.LEGENDARY, damage: 50, accuracy: 0.9, critChance: 0.2, critDamageMultiplier: 2.5, description: '하늘의 분노를 담은 전설적인 검입니다.' },
             { id: 12, type: ItemType.MATERIAL, name: '마력의 돌', price: 100, grade: ItemGrade.RARE, description: '신비한 마력이 깃든 돌. 강화에 사용됩니다.' },
 
-            // --- 신규 무기 ---
-            // Common
+            // --- 기존 확장 아이템 ---
             { id: 13, type: ItemType.WEAPON, name: '단검', price: 50, grade: ItemGrade.COMMON, damage: 4, accuracy: 0.95, critChance: 0.05, critDamageMultiplier: 1.6, description: '빠른 공격이 가능한 작은 검입니다.' },
             { id: 14, type: ItemType.WEAPON, name: '글라디우스', price: 75, grade: ItemGrade.COMMON, damage: 6, accuracy: 0.9, description: '로마 병사들이 사용하던 짧은 검입니다.' },
             { id: 15, type: ItemType.WEAPON, name: '손도끼', price: 55, grade: ItemGrade.COMMON, damage: 5, accuracy: 0.85, description: '한 손으로 다루기 쉬운 도끼입니다.' },
             { id: 16, type: ItemType.WEAPON, name: '쿼터스태프', price: 45, grade: ItemGrade.COMMON, damage: 4, accuracy: 0.9, description: '단단한 나무로 만든 긴 지팡이입니다.' },
             { id: 17, type: ItemType.WEAPON, name: '망치', price: 20, grade: ItemGrade.COMMON, damage: 4, accuracy: 0.75, description: '평범한 망치입니다.' },
-
-            // Uncommon
             { id: 18, type: ItemType.WEAPON, name: '아이언 액스', price: 330, grade: ItemGrade.UNCOMMON, damage: 12, accuracy: 0.85, description: '묵직한 철제 도끼입니다.' },
             { id: 19, type: ItemType.WEAPON, name: '숏보우', price: 270, grade: ItemGrade.UNCOMMON, weaponType: 'Bow', damage: 8, accuracy: 1.0, critChance: 0.1, critDamageMultiplier: 1.6, description: '다루기 쉬운 짧은 활입니다.' },
             { id: 20, type: ItemType.WEAPON, name: '롱소드', price: 375, grade: ItemGrade.UNCOMMON, damage: 11, accuracy: 0.9, critChance: 0.05, critDamageMultiplier: 1.5, description: '균형 잡힌 장검입니다.' },
@@ -537,8 +568,6 @@
             { id: 22, type: ItemType.WEAPON, name: '시미터', price: 360, grade: ItemGrade.UNCOMMON, damage: 10, accuracy: 0.9, critChance: 0.08, critDamageMultiplier: 1.6, description: '아름다운 곡선 형태의 검입니다.' },
             { id: 23, type: ItemType.WEAPON, name: '쇠뇌', price: 450, grade: ItemGrade.UNCOMMON, weaponType: 'Bow', damage: 14, accuracy: 0.8, description: '강력하지만 장전이 느린 쇠뇌입니다.' },
             { id: 24, type: ItemType.WEAPON, name: '메이스', price: 345, grade: ItemGrade.UNCOMMON, damage: 10, accuracy: 0.9, description: '둔기류 무기입니다.' },
-
-            // Rare
             { id: 25, type: ItemType.WEAPON, name: '브로드소드', price: 1260, grade: ItemGrade.RARE, damage: 18, accuracy: 0.9, description: '넓은 칼날을 가진 위력적인 검입니다.' },
             { id: 26, type: ItemType.WEAPON, name: '미스릴 단검', price: 1530, grade: ItemGrade.RARE, damage: 15, accuracy: 1.0, critChance: 0.15, critDamageMultiplier: 1.8, description: '가볍고 날카로운 미스릴 단검입니다.' },
             { id: 27, type: ItemType.WEAPON, name: '워해머', price: 1620, grade: ItemGrade.RARE, damage: 22, accuracy: 0.8, description: '적의 방어구를 부수는 육중한 망치입니다.' },
@@ -546,37 +575,27 @@
             { id: 29, type: ItemType.WEAPON, name: '롱보우', price: 1350, grade: ItemGrade.RARE, weaponType: 'Bow', damage: 16, accuracy: 1.0, critChance: 0.12, critDamageMultiplier: 1.7, description: '먼 거리의 적을 저격하는 장궁입니다.' },
             { id: 30, type: ItemType.WEAPON, name: '모닝스타', price: 1470, grade: ItemGrade.RARE, damage: 19, accuracy: 0.88, procChance: 0.15, procDamage: 8, description: '철퇴 끝에 가시가 박혀있습니다. 15% 확률로 추가 피해를 입힙니다.' },
             { id: 31, type: ItemType.WEAPON, name: '클레이모어', price: 1530, grade: ItemGrade.RARE, damage: 21, accuracy: 0.8, description: '스코틀랜드의 양손 검입니다.' },
-
-            // Epic
             { id: 32, type: ItemType.WEAPON, name: '기사의 검', price: 3000, grade: ItemGrade.EPIC, damage: 30, accuracy: 0.95, critChance: 0.1, critDamageMultiplier: 1.7, description: '왕국을 수호하는 기사에게 주어지는 검입니다.' },
             { id: 33, type: ItemType.WEAPON, name: '암살자의 칼날', price: 3600, grade: ItemGrade.EPIC, damage: 25, accuracy: 1.1, critChance: 0.25, critDamageMultiplier: 2.2, description: '어둠 속에서 적의 심장을 노리는 칼날입니다.' },
             { id: 34, type: ItemType.WEAPON, name: '룬 블레이드', price: 3200, grade: ItemGrade.EPIC, damage: 28, accuracy: 0.9, procChance: 0.1, procDamage: 15, description: '고대 룬 문자가 새겨져 마법의 힘을 발휘합니다. 10% 확률로 마법 피해를 입힙니다.' },
             { id: 35, type: ItemType.WEAPON, name: '카타나', price: 3400, grade: ItemGrade.EPIC, damage: 26, accuracy: 1.0, critChance: 0.2, critDamageMultiplier: 2.0, description: '동방의 장인이 만든 예리한 도입니다.' },
             { id: 36, type: ItemType.WEAPON, name: '핼버드', price: 3100, grade: ItemGrade.EPIC, damage: 32, accuracy: 0.85, description: '창과 도끼를 합친 형태의 강력한 폴암입니다.' },
             { id: 37, type: ItemType.WEAPON, name: '건블레이드', price: 3800, grade: ItemGrade.EPIC, weaponType: 'Gun', damage: 27, accuracy: 0.95, critChance: 0.15, critDamageMultiplier: 1.8, description: '총과 검이 결합된 하이브리드 무기입니다.' },
-
-            // Legendary
             { id: 38, type: ItemType.WEAPON, name: '엑스칼리버', price: 25000, grade: ItemGrade.LEGENDARY, damage: 60, accuracy: 1.0, critChance: 0.2, critDamageMultiplier: 2.5, procChance: 0.2, procDamage: 30, description: '선택받은 왕의 전설적인 성검. 20% 확률로 신성한 빛의 추가 피해를 입힙니다.' },
             { id: 39, type: ItemType.WEAPON, name: '드래곤 슬레이어', price: 20000, grade: ItemGrade.LEGENDARY, damage: 70, accuracy: 0.85, description: '용의 비늘마저 꿰뚫는 거대한 대검입니다.' },
             { id: 40, type: ItemType.WEAPON, name: '스톰브링어', price: 21250, grade: ItemGrade.LEGENDARY, weaponType: 'Bow', damage: 55, accuracy: 1.2, critChance: 0.25, critDamageMultiplier: 2.2, description: '폭풍의 힘을 담아 번개의 화살을 쏘는 활입니다.' },
             { id: 41, type: ItemType.WEAPON, name: '게이볼그', price: 22500, grade: ItemGrade.LEGENDARY, damage: 65, accuracy: 0.95, critChance: 0.15, critDamageMultiplier: 2.0, procChance: 0.3, procDamage: 25, description: '던지면 반드시 심장을 꿰뚫는다는 저주받은 마창. 30% 확률로 출혈 피해를 입힙니다.' },
             { id: 42, type: ItemType.WEAPON, name: '섀도우팽', price: 23750, grade: ItemGrade.LEGENDARY, damage: 50, accuracy: 1.1, critChance: 0.3, critDamageMultiplier: 2.8, description: '그림자에서 벼려낸 단검. 치명타에 특화되어 있습니다.' },
-
-            // --- 신규 방어구 ---
             { id: 43, type: ItemType.ARMOR, name: '천 갑옷', price: 30, grade: ItemGrade.COMMON, defense: 2, description: '가장 기본적인 천 갑옷입니다.' },
             { id: 44, type: ItemType.ARMOR, name: '사슬 갑옷', price: 300, grade: ItemGrade.UNCOMMON, defense: 8, description: '작은 고리를 엮어 만든 갑옷입니다.' },
             { id: 45, type: ItemType.ARMOR, name: '플레이트 아머', price: 1500, grade: ItemGrade.RARE, defense: 20, description: '전신을 감싸는 판금 갑옷입니다.' },
             { id: 46, type: ItemType.ARMOR, name: '기사의 갑옷', price: 3000, grade: ItemGrade.EPIC, defense: 35, description: '고위 기사들이 입는 견고한 갑옷입니다.' },
             { id: 47, type: ItemType.ARMOR, name: '용비늘 갑옷', price: 7500, grade: ItemGrade.LEGENDARY, defense: 50, description: '용의 비늘로 만들어져 마법과 화염에 강한 저항력을 가집니다.' },
-
-            // --- 신규 소모품 ---
             { id: 50, type: ItemType.CONSUMABLE, name: '중급 체력 물약', price: 50, grade: ItemGrade.UNCOMMON, effect: { type: 'heal', amount: 50 }, description: 'HP를 50 회복합니다.' },
             { id: 51, type: ItemType.CONSUMABLE, name: '상급 체력 물약', price: 120, grade: ItemGrade.RARE, effect: { type: 'heal', amount: 150 }, description: 'HP를 150 회복합니다.' },
             { id: 52, type: ItemType.CONSUMABLE, name: '독극물 병', price: 80, grade: ItemGrade.UNCOMMON, effect: { type: 'damage_enemy', amount: 30 }, description: '적에게 30의 독 피해를 입힙니다.' },
             { id: 53, type: ItemType.CONSUMABLE, name: '화염병', price: 150, grade: ItemGrade.RARE, effect: { type: 'damage_enemy', amount: 70 }, description: '적에게 70의 화염 피해를 입힙니다.' },
             { id: 54, type: ItemType.CONSUMABLE, name: '신성한 성수', price: 300, grade: ItemGrade.EPIC, effect: { type: 'damage_enemy', amount: 150 }, description: '언데드에게 특히 강력한 신성한 피해를 150 입힙니다.' },
-            
-            // --- 신규 총기류 ---
             { id: 55, type: ItemType.WEAPON, name: '낡은 권총', price: 85, grade: ItemGrade.COMMON, damage: 6, accuracy: 0.95, weaponType: 'Gun', description: '기본적인 반자동 권총입니다.' },
             { id: 56, type: ItemType.WEAPON, name: '펌프 액션 샷건', price: 420, grade: ItemGrade.UNCOMMON, damage: 15, accuracy: 0.75, weaponType: 'Gun', description: '근거리에서 강력한 위력을 발휘하는 산탄총입니다.' },
             { id: 57, type: ItemType.WEAPON, name: '기관단총', price: 480, grade: ItemGrade.UNCOMMON, damage: 9, accuracy: 0.9, weaponType: 'Gun', procChance: 0.15, procDamage: 4, description: '빠른 연사력을 자랑합니다. 15% 확률로 추가 사격을 합니다.' },
@@ -586,14 +605,19 @@
             { id: 61, type: ItemType.WEAPON, name: '미니건', price: 23000, grade: ItemGrade.LEGENDARY, damage: 58, accuracy: 0.75, weaponType: 'Gun', procChance: 0.4, procDamage: 15, description: '분당 수천 발의 탄환을 쏟아붓는 파괴의 화신. 40% 확률로 추가 피해를 입힙니다.' },
             { id: 62, type: ItemType.WEAPON, name: '황금 총', price: 30000, grade: ItemGrade.LEGENDARY, damage: 77, accuracy: 1.0, weaponType: 'Gun', critChance: 0.5, critDamageMultiplier: 3.0, description: '모든 것을 한 방에 끝내는 전설의 황금 총. 명중률과 치명타율이 경이롭습니다.' },
             { id: 63, type: ItemType.WEAPON, name: '심판자의 철퇴', price: 24500, grade: ItemGrade.LEGENDARY, damage: 70, accuracy: 0.9, critChance: 0.1, critDamageMultiplier: 2.0, procChance: 0.2, procDamage: 110, description: '적을 심판하는 육중한 철퇴. 20% 확률로 정의의 힘이 발동하여 110의 추가 신성 피해를 입힙니다.' },
-            
-            // --- 추가 방어구 & 소모품 ---
             { id: 64, type: ItemType.ARMOR, name: '미스릴 셔츠', price: 900, grade: ItemGrade.RARE, defense: 18, description: '가볍고 튼튼한 미스릴로 짠 셔츠입니다.' },
             { id: 65, type: ItemType.ARMOR, name: '그림자 로브', price: 2800, grade: ItemGrade.EPIC, defense: 32, description: '어둠에 몸을 숨기기 좋은 로브. 약간의 마법 저항력도 있습니다.' },
             { id: 66, type: ItemType.ARMOR, name: '수호자의 갑옷', price: 7000, grade: ItemGrade.LEGENDARY, defense: 48, description: '고대 수호자들의 힘이 깃든 갑옷입니다.' },
             { id: 67, type: ItemType.CONSUMABLE, name: '최상급 체력 물약', price: 250, grade: ItemGrade.EPIC, effect: { type: 'heal', amount: 300 }, description: 'HP를 300 회복합니다.' },
             { id: 68, type: ItemType.CONSUMABLE, name: '엘릭서', price: 1000, grade: ItemGrade.LEGENDARY, effect: { type: 'heal', amount: 9999 }, description: 'HP를 완전히 회복시킵니다.' },
             { id: 69, type: ItemType.CONSUMABLE, name: '강력한 화염병', price: 400, grade: ItemGrade.EPIC, effect: { type: 'damage_enemy', amount: 120 }, description: '적에게 120의 강력한 화염 피해를 입힙니다.' },
+            { id: 70, type: ItemType.CONSUMABLE, name: '직업 변경 메달리온', price: 10000, grade: ItemGrade.EPIC, effect: { type: 'job_change' }, description: '사용 시 현재 직업을 초기화하고 새로운 직업을 선택할 수 있습니다.' },
+            // --- 신화 등급 무기 ---
+            { id: 71, type: ItemType.WEAPON, name: '태초의 불꽃', price: 250000, grade: ItemGrade.MYTHIC, damage: 150, accuracy: 1.0, critChance: 0.25, critDamageMultiplier: 3.0, procChance: 0.3, procDamage: 100, description: '세상을 창조한 불꽃의 정수가 담긴 대검. 30% 확률로 모든 것을 태우는 화염을 방출합니다.' },
+            { id: 72, type: ItemType.WEAPON, name: '시간 왜곡의 칼날', price: 300000, grade: ItemGrade.MYTHIC, damage: 120, accuracy: 1.2, critChance: 0.5, critDamageMultiplier: 3.5, description: '시간의 흐름을 베어버리는 단검. 경이로운 치명타 능력으로 적을 소멸시킵니다.' },
+            { id: 73, type: ItemType.WEAPON, name: '은하수 파괴자', price: 280000, grade: ItemGrade.MYTHIC, damage: 180, accuracy: 0.85, weaponType: 'Gun', description: '별을 꿰뚫는 힘을 지닌 저격소총. 압도적인 파괴력을 자랑합니다.' },
+            { id: 74, type: ItemType.WEAPON, name: '세계수의 가지', price: 270000, grade: ItemGrade.MYTHIC, damage: 130, accuracy: 1.1, weaponType: 'Bow', procChance: 0.5, procDamage: 80, description: '세계수의 힘이 깃든 활. 50% 확률로 자연의 정령들이 공격을 돕습니다.' },
+            { id: 75, type: ItemType.WEAPON, name: '종말의 망치', price: 260000, grade: ItemGrade.MYTHIC, damage: 200, accuracy: 0.8, description: '세상의 종말을 가져온다는 거대한 망치. 모든 것을 평등하게 파괴합니다.' },
         ];
 
         const allMaterials = [
@@ -605,6 +629,7 @@
         const allRecipes = [
             { id: 1, name: '강철 검 제작', result: allItems.find(item => item.id === 3), materials: [{ materialId: 6, quantity: 5 }], requiredCraftingLevel: 1 },
             { id: 2, name: '가죽 갑옷 제작', result: allItems.find(item => item.id === 4), materials: [{ materialId: 7, quantity: 10 }], requiredCraftingLevel: 1 },
+            { id: 3, name: '플레이트 아머 제작', result: allItems.find(item => item.id === 45), materials: [{ materialId: 6, quantity: 20 }, { materialId: 12, quantity: 5 }], requiredCraftingLevel: 5 },
         ];
 
         const allMonsters = [
@@ -616,6 +641,10 @@
             { id: 102, name: '오우거', hp: 80, maxHp: 80, attack: 15, defense: 5, xp: 50, gold: 100, drops: [{ itemId: 27, chance: 0.03, quantity: 1 }], emoji: '🦍' },
             { id: 103, name: '리치', hp: 100, maxHp: 100, attack: 20, defense: 10, xp: 80, gold: 150, drops: [{ itemId: 34, chance: 0.02, quantity: 1 }], emoji: '🧙' },
             { id: 104, name: '새끼용', hp: 250, maxHp: 250, attack: 28, defense: 18, xp: 300, gold: 500, drops: [{ itemId: 47, chance: 0.1, quantity: 1 }], emoji: '🐉' },
+            // 신규 몬스터
+            { id: 201, name: '지옥의 군주', hp: 1000, maxHp: 1000, attack: 80, defense: 40, xp: 2000, gold: 5000, drops: [{ itemId: 12, chance: 1, quantity: 15 }], emoji: '😈' },
+            { id: 202, name: '고대 골렘', hp: 1500, maxHp: 1500, attack: 60, defense: 80, xp: 2500, gold: 6000, drops: [{ itemId: 12, chance: 1, quantity: 20 }], emoji: '🗿' },
+            { id: 203, name: '심연의 감시자', hp: 1200, maxHp: 1200, attack: 100, defense: 30, xp: 3000, gold: 7000, drops: [{ itemId: 12, chance: 1, quantity: 25 }], emoji: '👁️' },
         ];
 
         const allDungeons = [
@@ -623,37 +652,39 @@
             { id: 1, name: '고블린 동굴', description: '초보 모험가에게 적합한 동굴입니다. 고블린들이 서식하고 있습니다.', difficulty: 2, stages: 10, monsters: [2, 2, 2, 3, 2, 3, 2, 3, 3, 3], rewards: { xp: 500, gold: 1000, items: [{ itemId: 12, quantity: 3 }] } },
             { id: 2, name: '오크의 전초기지', description: '강력한 오크들이 지키고 있는 전초기지입니다. 단단히 준비해야 합니다.', difficulty: 3, stages: 10, monsters: [3, 3, 3, 3, 3, 4, 3, 4, 3, 4], rewards: { xp: 2500, gold: 5000, items: [{ itemId: 8, quantity: 1 }, { itemId: 12, quantity: 10 }] } },
             { id: 3, name: '잊혀진 지하묘지', description: '언데드들이 배회하는 위험한 지하묘지입니다. 강력한 해골 기사와 오우거가 등장합니다.', difficulty: 4, stages: 10, monsters: [3, 101, 3, 101, 4, 101, 102, 101, 4, 102], rewards: { xp: 5000, gold: 10000, items: [{ itemId: 46, quantity: 1 }, { itemId: 12, quantity: 20 }] } },
-            { id: 4, name: '용의 둥지', description: '전설 속 용이 잠들어 있다는 둥지. 강력한 몬스터들과 리치, 그리고... 새끼용이 당신을 기다립니다.', difficulty: 5, stages: 10, monsters: [102, 4, 102, 103, 4, 103, 102, 103, 103, 104], rewards: { xp: 12000, gold: 30000, items: [{ itemId: 38, quantity: 1 }] } },
+            { id: 4, name: '용의 둥지', description: '전설 속 용이 잠들어 있다는 둥지. 강력한 몬스터들과 리치, 그리고... 새끼용이 당신을 기다립니다.', difficulty: 5, stages: 10, monsters: [102, 4, 102, 103, 4, 103, 102, 103, 103, 104], rewards: { xp: 12000, gold: 10000, items: [{ itemId: 38, quantity: 1 }] } },
+            // 신규 던전
+            { id: 5, name: '불타는 심연', description: '지옥의 불길이 타오르는 끔찍한 공간입니다. 지옥의 군주가 지배하고 있습니다.', difficulty: 7, stages: 15, monsters: [103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 201], rewards: { xp: 50000, gold: 100000, items: [{ itemId: 12, quantity: 50 }] } },
+            { id: 6, name: '고대 골렘의 무덤', description: '잠들어 있는 거인을 깨우지 마십시오. 엄청난 방어력을 가진 고대 골렘이 버티고 있습니다.', difficulty: 8, stages: 15, monsters: [4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 202], rewards: { xp: 60000, gold: 120000, items: [{ itemId: 12, quantity: 70 }] } },
+            { id: 7, name: '혼돈의 차원', description: '시공간이 뒤틀린 미지의 공간. 예측할 수 없는 심연의 감시자가 당신을 노립니다.', difficulty: 9, stages: 15, monsters: [104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 203], rewards: { xp: 80000, gold: 150000, items: [{ itemId: 12, quantity: 100 }] } },
         ];
 
         const allQuests = [
-            {
-                id: 1,
-                title: '초보 사냥꾼',
-                description: '슬라임을 5마리 처치하세요.',
-                type: 'DEFEAT_MONSTER',
-                targetId: 1, // Slime ID
-                targetQuantity: 5,
-                rewards: { xp: 50, gold: 100 }
-            },
-            {
-                id: 2,
-                title: '가죽 수집',
-                description: '가죽을 10개 모으세요.',
-                type: 'COLLECT_ITEM',
-                targetId: 7, // Leather ID
-                targetQuantity: 10,
-                rewards: { xp: 30, gold: 150 }
-            },
-            {
-                id: 3,
-                title: '첫 번째 제작',
-                description: '강철 검을 1개 제작하세요.',
-                type: 'CRAFT_ITEM',
-                targetId: 3, // Steel Sword ID
-                targetQuantity: 1,
-                rewards: { xp: 100, gold: 200, items: [{ itemId: 12, quantity: 2 }] } // Magic Stone reward
-            }
+            // 기존 퀘스트
+            { id: 1, title: '초보 사냥꾼', description: '슬라임을 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 5, rewards: { xp: 50, gold: 100 } },
+            { id: 2, title: '가죽 수집', description: '가죽을 10개 모으세요.', type: 'COLLECT_ITEM', targetId: 7, targetQuantity: 10, rewards: { xp: 30, gold: 150 } },
+            { id: 3, title: '첫 번째 제작', description: '강철 검을 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 1, rewards: { xp: 100, gold: 200, items: [{ itemId: 12, quantity: 2 }] } },
+            // 신규 퀘스트
+            { id: 4, title: '슬라임 박멸', description: '슬라임을 50마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 50, rewards: { xp: 200, gold: 500 } },
+            { id: 5, title: '고블린 소탕 작전', description: '고블린을 30마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 2, targetQuantity: 30, rewards: { xp: 300, gold: 700 } },
+            { id: 6, title: '오크와의 전면전', description: '오크를 20마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 3, targetQuantity: 20, rewards: { xp: 500, gold: 1000 } },
+            { id: 7, title: '언데드 정화', description: '해골 기사를 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 101, targetQuantity: 10, rewards: { xp: 800, gold: 1500 } },
+            { id: 8, title: '거인의 위협', description: '오우거를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 5, rewards: { xp: 1000, gold: 2000 } },
+            { id: 9, title: '광물 전문가', description: '철광석을 30개 모으세요.', type: 'COLLECT_ITEM', targetId: 6, targetQuantity: 30, rewards: { xp: 150, gold: 300 } },
+            { id: 10, title: '마법의 근원', description: '마력의 돌을 20개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 20, rewards: { xp: 400, gold: 800, items: [{ itemId: 51, quantity: 2 }] } },
+            { id: 11, title: '대장장이의 길', description: '강철 검을 5개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 5, rewards: { xp: 500, gold: 1000 } },
+            { id: 12, title: '견고한 방어', description: '플레이트 아머를 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 45, targetQuantity: 1, rewards: { xp: 1200, gold: 2500 } },
+            { id: 13, title: '고블린 동굴 정복', description: '고블린 동굴을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 1, rewards: { xp: 1000, gold: 2000 } },
+            { id: 14, title: '오크 전초기지 파괴', description: '오크의 전초기지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 2, targetQuantity: 1, rewards: { xp: 3000, gold: 6000 } },
+            { id: 15, title: '지하묘지의 안식', description: '잊혀진 지하묘지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 3, targetQuantity: 1, rewards: { xp: 6000, gold: 12000, items: [{ itemId: 33, quantity: 1 }] } },
+            { id: 16, title: '드래곤 슬레이어의 자격', description: '용의 둥지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 1, rewards: { xp: 15000, gold: 35000, items: [{ itemId: 40, quantity: 1 }] } },
+            { id: 17, title: '심연으로의 첫걸음', description: '불타는 심연을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 5, targetQuantity: 1, rewards: { xp: 60000, gold: 120000, items: [{ itemId: 12, quantity: 50 }] } },
+            { id: 18, title: '고대의 파수꾼', description: '고대 골렘의 무덤을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 6, targetQuantity: 1, rewards: { xp: 70000, gold: 140000, items: [{ itemId: 12, quantity: 70 }] } },
+            { id: 19, title: '혼돈의 지배자', description: '혼돈의 차원을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 7, targetQuantity: 1, rewards: { xp: 90000, gold: 170000, items: [{ itemId: 12, quantity: 100 }] } },
+            { id: 20, title: '지옥의 지배자', description: '지옥의 군주를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 1, rewards: { xp: 5000, gold: 10000 } },
+            { id: 21, title: '움직이는 석상', description: '고대 골렘을 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 1, rewards: { xp: 6000, gold: 12000 } },
+            { id: 22, title: '공허의 눈', description: '심연의 감시자를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 203, targetQuantity: 1, rewards: { xp: 7000, gold: 14000 } },
+            { id: 23, title: '리치 헌터', description: '리치를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 103, targetQuantity: 5, rewards: { xp: 2000, gold: 4000 } },
         ];
 
         const townLevels = [
@@ -669,6 +700,10 @@
             { trophies: 250, rewards: { items: [{ itemId: 12, quantity: 5 }] } },
             { trophies: 500, rewards: { gold: 2000, items: [{ itemId: 9, quantity: 1 }] } },
             { trophies: 1000, rewards: { gold: 10000, items: [{ itemId: 10, quantity: 1 }] } },
+            { trophies: 1500, rewards: { gold: 15000, items: [{ itemId: 32, quantity: 1 }] } },
+            { trophies: 2500, rewards: { gold: 30000, items: [{ itemId: 38, quantity: 1 }] } },
+            { trophies: 5000, rewards: { gold: 75000, items: [{ itemId: 41, quantity: 1 }] } },
+            { trophies: 10000, rewards: { gold: 200000, items: [{ itemId: 62, quantity: 1 }] } },
         ];
 
         const getInitialPlayerStats = () => ({
@@ -716,7 +751,7 @@
             <div className="stat-bar-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', fontSize: '0.9em' }}>
                     <span>{label}</span>
-                    <span>{formatNumber(value)} / {formatNumber(maxValue)}</span>
+                    <span>{formatNumber(Math.ceil(value))} / {formatNumber(maxValue)}</span>
                 </div>
                 <div className="stat-bar">
                     <div className="stat-bar-fill" style={{ width: `${(value / maxValue) * 100}%`, backgroundColor: color }}></div>
@@ -724,7 +759,7 @@
             </div>
         );
 
-        const PlayerStatsView = ({ playerStats, setPlayerStats, setView }) => {
+        const PlayerStatsView = ({ playerStats, setPlayerStats, setView, resetGame }) => {
             const [isEditingName, setIsEditingName] = useState(false);
             const [newName, setNewName] = useState(playerStats.playerName);
 
@@ -781,6 +816,7 @@
                     <p>갑옷: <span className={playerStats.equipment.armor ? ItemGradeInfo[playerStats.equipment.armor.grade]?.class : ''}>{getDisplayName(playerStats.equipment.armor)}</span></p>
                     
                     <InventoryView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />
+                    <button onClick={resetGame} style={{ marginTop: '20px', backgroundColor: '#c62828' }}>게임 초기화</button>
                 </div>
             );
         };
@@ -795,7 +831,7 @@
                     <button onClick={() => setView(View.BLACKSMITH)}>대장간</button>
                     <button onClick={() => setView(View.QUEST_BOARD)}>퀘스트</button>
                     <button onClick={() => {
-                        if (playerStats.level < 10) {
+                        if (playerStats.level < 10 && !playerStats.playerClass) {
                             alert('직업 선택은 10레벨부터 가능합니다.');
                         } else {
                             setView(View.CLASS_SELECTION);
@@ -877,7 +913,7 @@
                                 onClick={() => setSelectedItem(item)}
                             >
                                 <strong className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</strong>
-                                <p>{item.price} G</p>
+                                <p>{formatNumber(item.price)} G</p>
                             </div>
                         ))}
                     </div>
@@ -888,7 +924,7 @@
                             {selectedItem.damage && <p>공격력: {selectedItem.damage}</p>}
                             {selectedItem.defense && <p>방어력: {selectedItem.defense}</p>}
                             {selectedItem.critChance && <p>치명타 확률: {selectedItem.critChance * 100}%</p>}
-                            <p>가격: {selectedItem.price} G</p>
+                            <p>가격: {formatNumber(selectedItem.price)} G</p>
                             <button onClick={handleBuy} disabled={playerStats.gold < selectedItem.price}>구매</button>
                         </div>
                     )}
@@ -896,7 +932,7 @@
             );
         };
 
-        const InventoryView = ({ playerStats, setPlayerStats }) => {
+        const InventoryView = ({ playerStats, setPlayerStats, setView }) => {
 
             const handleEquip = (itemToEquip) => {
                 setPlayerStats(prev => {
@@ -913,18 +949,19 @@
                     }
 
                     // Remove equipped item from inventory
-                    const itemInInventory = newInventory.find(i => i.id === itemToEquip.id && i.enhancementLevel === itemToEquip.enhancementLevel);
+                    const itemInInventoryIndex = newInventory.findIndex(i => i.id === itemToEquip.id && (i.enhancementLevel || 0) === (itemToEquip.enhancementLevel || 0));
+                    const itemInInventory = newInventory[itemInInventoryIndex];
                     if (itemInInventory.quantity > 1) {
-                        itemInInventory.quantity -= 1;
+                        newInventory[itemInInventoryIndex] = {...itemInInventory, quantity: itemInInventory.quantity - 1};
                     } else {
-                        newInventory = newInventory.filter(i => i !== itemInInventory);
+                        newInventory.splice(itemInInventoryIndex, 1);
                     }
 
                     // Add previously equipped item back to inventory
                     if (previouslyEquipped) {
-                         const existingItem = newInventory.find(i => i.id === previouslyEquipped.id && i.enhancementLevel === previouslyEquipped.enhancementLevel);
-                        if (existingItem) {
-                            existingItem.quantity += 1;
+                         const existingItemIndex = newInventory.findIndex(i => i.id === previouslyEquipped.id && (i.enhancementLevel || 0) === (previouslyEquipped.enhancementLevel || 0));
+                        if (existingItemIndex > -1) {
+                            newInventory[existingItemIndex] = {...newInventory[existingItemIndex], quantity: newInventory[existingItemIndex].quantity + 1};
                         } else {
                             newInventory.push({ ...previouslyEquipped, quantity: 1 });
                         }
@@ -944,9 +981,70 @@
                         
                         return { ...prev, hp: newHp, inventory: newInventory };
                     });
+                } else if (itemToUse.type === ItemType.CONSUMABLE && itemToUse.effect?.type === 'job_change') {
+                    if (!playerStats.playerClass) {
+                        alert("현재 직업이 없어 사용할 수 없습니다.");
+                        return;
+                    }
+                    if (confirm("정말로 직업을 변경하시겠습니까? 현재 직업의 능력치가 초기화됩니다.")) {
+                        setPlayerStats(prev => {
+                            const oldClassBonuses = PlayerClasses[prev.playerClass].bonuses;
+                            const newAttack = prev.attack - (oldClassBonuses.attack || 0);
+                            const newDefense = prev.defense - (oldClassBonuses.defense || 0);
+                            const newMaxHp = prev.maxHp - (oldClassBonuses.maxHp || 0);
+
+                            const newInventory = prev.inventory.map(item =>
+                                item.id === itemToUse.id ? { ...item, quantity: item.quantity - 1 } : item
+                            ).filter(item => item.quantity > 0);
+
+                            return {
+                                ...prev,
+                                playerClass: null,
+                                attack: newAttack,
+                                defense: newDefense,
+                                maxHp: newMaxHp,
+                                hp: Math.min(newMaxHp, prev.hp),
+                                inventory: newInventory,
+                            };
+                        });
+                        alert("직업이 초기화되었습니다. 새로운 직업을 선택해주세요.");
+                        setView(View.CLASS_SELECTION);
+                    }
                 }
             };
             
+            const handleSell = (itemToSell) => {
+                const isEquipped = (playerStats.equipment.weapon && playerStats.equipment.weapon.id === itemToSell.id && (playerStats.equipment.weapon.enhancementLevel || 0) === (itemToSell.enhancementLevel || 0)) ||
+                                   (playerStats.equipment.armor && playerStats.equipment.armor.id === itemToSell.id && (playerStats.equipment.armor.enhancementLevel || 0) === (itemToSell.enhancementLevel || 0));
+
+                if (isEquipped) {
+                    alert("장착 중인 아이템은 판매할 수 없습니다.");
+                    return;
+                }
+
+                const sellPrice = Math.floor(itemToSell.price * 0.4); // Sell for 40% of original price
+                if (confirm(`${getDisplayName(itemToSell)}을(를) ${sellPrice} G에 판매하시겠습니까?`)) {
+                    setPlayerStats(prev => {
+                        const newInventory = [...prev.inventory];
+                        const itemIndex = newInventory.findIndex(i => i.id === itemToSell.id && (i.enhancementLevel || 0) === (itemToSell.enhancementLevel || 0));
+
+                        if (itemIndex === -1) return prev; // Should not happen
+
+                        if (newInventory[itemIndex].quantity > 1) {
+                            newInventory[itemIndex].quantity -= 1;
+                        } else {
+                            newInventory.splice(itemIndex, 1);
+                        }
+
+                        return {
+                            ...prev,
+                            gold: prev.gold + sellPrice,
+                            inventory: newInventory
+                        };
+                    });
+                }
+            };
+
             return (
                 <div className="card" style={{marginTop: '20px'}}>
                     <h3>인벤토리</h3>
@@ -961,6 +1059,7 @@
                                     {item.type === ItemType.CONSUMABLE ? (
                                         <button onClick={() => handleUse(item)}>사용</button>
                                     ): null}
+                                    <button onClick={() => handleSell(item)} style={{marginLeft: '5px'}}>판매</button>
                                 </div>
                             </div>
                         )) : <p>인벤토리가 비어있습니다.</p>}
@@ -1042,10 +1141,12 @@
                     return { ...possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)] };
                 };
                 
-                const randomMonster = getBattleMonster();
-                setMonster(randomMonster);
-                addLog(`${randomMonster.name}이(가) 나타났다!`, 'system-message');
-            }, [addLog, playerStats]);
+                if (!monster) {
+                    const randomMonster = getBattleMonster();
+                    setMonster(randomMonster);
+                    addLog(`${randomMonster.name}이(가) 나타났다!`, 'system-message');
+                }
+            }, [addLog, monster]);
 
             const handleBattleEnd = useCallback((win) => {
                 setIsBattleOver(true);
@@ -1285,6 +1386,10 @@
                     damage = Math.floor(totalAttack * critMultiplier);
                     damage = Math.max(1, damage - monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Archer.name}'! ${monster.name}에게 ${damage}의 치명적인 피해를 입혔다!`;
+                } else if (playerClass === 'Magician') {
+                    damage = Math.floor(totalAttack * 4);
+                    damage = Math.max(1, damage - monster.defense);
+                    logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
                 } else { // Adventurer
                     damage = Math.floor(totalAttack * 2.5);
                     damage = Math.max(1, damage - monster.defense);
@@ -1319,9 +1424,9 @@
                 <div className="card">
                     {showInventory && (
                         <div className="modal-backdrop">
-                            <div className="modal-content">
+                            <div className="modal-content card">
                                 <h3>아이템 사용</h3>
-                                <div className="battle-inventory-list">
+                                <div className="inventory-list">
                                     {playerConsumables.length > 0 ? playerConsumables.map(item => (
                                         <div key={item.id} className="inventory-item">
                                             <span><strong className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</strong> (x{item.quantity})</span>
@@ -1338,7 +1443,7 @@
                             <StatBar value={playerStats.hp} maxValue={playerStats.maxHp} color="#4caf50" label={playerStats.playerName} />
                             <span className="character">🧑‍🚀</span>
                             {activePet && <span className="pet-character">
-                                {activePet.type === 'Griffin' ? '🦅' : activePet.type === 'Turtle' ? '🐢' : '🐲'}
+                                {activePet.type === 'Griffin' ? '🦅' : activePet.type === 'Turtle' ? '🐢' : activePet.type === 'Phoenix' ? '🔥' : '🐲' }
                             </span>}
                             {damagePopups.filter(p => p.target === 'player').map(p => (
                                 <div key={p.id} className={`damage-popup ${p.isCrit ? 'crit' : ''}`}>{p.amount}</div>
@@ -1377,7 +1482,7 @@
         const ClassSelectionView = ({ playerStats, setPlayerStats, setView }) => {
             const handleSelectClass = (className) => {
                 if (playerStats.playerClass) {
-                    alert("이미 직업을 선택했습니다.");
+                    alert("이미 직업을 선택했습니다. 변경하려면 '직업 변경 메달리온'을 사용하세요.");
                     return;
                 }
 
@@ -1408,7 +1513,7 @@
                         <h2>나의 직업</h2>
                         <h3>{currentClass.name}</h3>
                         <p>{currentClass.description}</p>
-                        <p>당신은 이미 자신의 길을 걷고 있습니다.</p>
+                        <p>당신은 이미 자신의 길을 걷고 있습니다. 다른 길을 원한다면 '직업 변경 메달리온'을 사용하세요.</p>
                     </div>
                 );
             }
@@ -1537,7 +1642,6 @@
                     
                      const updatedQuests = prev.activeQuests.map(quest => {
                         if (quest.isCompleted) return quest;
-
                         let newProgress = quest.currentProgress;
                         if (quest.type === 'DEFEAT_MONSTER' && quest.targetId === monster.id) {
                             newProgress += 1;
@@ -1572,66 +1676,54 @@
                                 newInventory.push({ ...itemInfo, quantity: rewardItem.quantity });
                             }
                         });
-                        return { ...prev, xp: finalXp, gold: finalGold, inventory: newInventory };
+                        
+                        const updatedQuests = prev.activeQuests.map(quest => {
+                           if (!quest.isCompleted && quest.type === 'CLEAR_DUNGEON' && quest.targetId === dungeon.id) {
+                               return { ...quest, currentProgress: quest.currentProgress + 1 };
+                           }
+                           return quest;
+                        });
+
+                        return { ...prev, xp: finalXp, gold: finalGold, inventory: newInventory, activeQuests: updatedQuests };
                     });
                     setTimeout(() => endDungeon(true), 2000);
                 }
-            }, [monster, currentStage, dungeon, addLog, setPlayerStats, endDungeon]);
+            }, [monster, currentStage, dungeon, setPlayerStats, addLog, endDungeon]);
 
-            const handlePlayerDeath = useCallback(() => {
+            const handleBattleFailed = useCallback(() => {
                 addLog('던전 공략 실패...', 'system-message');
-                setPlayerStats(prev => ({...prev, hp: 1}));
+                setPlayerStats(prev => ({ ...prev, hp: 1 }));
                 setTimeout(() => endDungeon(false), 2000);
             }, [addLog, setPlayerStats, endDungeon]);
 
             const handleEnemyTurn = useCallback(() => {
                 if (!monster) return;
-
-                if (monster.statusEffects?.stun && monster.statusEffects.stun > 0) {
-                    addLog(`${monster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
-                    setMonster(prev => ({...prev, statusEffects: { stun: prev.statusEffects.stun - 1 }}));
-                    setIsPlayerTurn(true);
-                    return;
-                }
-
                 setEnemyAttacking(true);
                 setTimeout(() => setEnemyAttacking(false), 400);
 
                 let damage = Math.max(1, monster.attack - totalDefense);
                 addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
                 addDamagePopup(String(damage), false, 'player');
-                const newPlayerHp = playerStats.hp - damage;
-                setPlayerStats(prev => ({ ...prev, hp: newPlayerHp }));
-                if (newPlayerHp <= 0) {
-                    handlePlayerDeath();
-                } else {
-                    setIsPlayerTurn(true);
-                }
-            }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handlePlayerDeath, setPlayerStats]);
-
-            const handlePlayerAction = (isAttack, damageDealt) => {
-                if(!monster) return;
-                const newMonsterHp = monster.hp - damageDealt;
-                setMonster({ ...monster, hp: newMonsterHp });
-
-                if (newMonsterHp <= 0) {
-                    handleMonsterDefeated();
-                } else {
-                    if (isAttack) {
-                         setUltimateCharge(prev => Math.min(5, prev + 1));
+                
+                setPlayerStats(prev => {
+                    const newPlayerHp = prev.hp - damage;
+                    if (newPlayerHp <= 0) {
+                        handleBattleFailed();
+                        return { ...prev, hp: 0 };
                     }
-                    setIsPlayerTurn(false);
-                }
-            }
+                    return { ...prev, hp: newPlayerHp };
+                });
+                setIsPlayerTurn(true);
+            }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats]);
 
             const handlePlayerAttack = () => {
                 if (!isPlayerTurn || !monster) return;
                 setPlayerAttacking(true);
                 setTimeout(() => setPlayerAttacking(false), 400);
+                setIsPlayerTurn(false);
 
                 const weapon = playerStats.equipment.weapon;
                 const accuracy = weapon?.accuracy || 0.9;
-                let totalDamage = 0;
 
                 if (Math.random() > accuracy) {
                     addLog(`${playerStats.playerName}의 공격이 빗나갔다!`, 'player-turn');
@@ -1646,27 +1738,35 @@
                     
                     addLog(`${playerStats.playerName}의 공격! ${monster.name}에게 ${damage}의 피해를 입혔다.${isCrit ? ' (치명타!)' : ''}`, 'player-turn');
                     addDamagePopup(String(damage), isCrit, 'enemy');
-                    totalDamage += damage;
                     
                     const procChance = weapon?.procChance || 0;
                     if (weapon && weapon.procDamage && Math.random() < procChance) {
                         const procDamage = weapon.procDamage;
                          addLog(`${getDisplayName(weapon)}의 특수 효과 발동! ${procDamage}의 추가 피해!`, 'effect-message');
-                         totalDamage += procDamage;
+                         damage += procDamage;
                     }
 
                     if (activePet && Math.random() < activePet.skillProcChance && activePet.skillEffect?.type === 'damage') {
                         const petDamage = activePet.skillEffect.amount || 0;
-                        totalDamage += petDamage;
+                        damage += petDamage;
                         addLog(`${activePet.name}의 스킬 '${activePet.skillName}'! ${petDamage}의 추가 피해!`, 'player-turn', true);
                     }
+                    
+                    const newMonsterHp = monster.hp - damage;
+                    if (newMonsterHp <= 0) {
+                        setMonster({ ...monster, hp: 0 });
+                        handleMonsterDefeated();
+                        return;
+                    }
+                    setMonster({ ...monster, hp: newMonsterHp });
                 }
-                
-                handlePlayerAction(true, totalDamage);
+                setUltimateCharge(prev => Math.min(5, prev + 1));
             };
-
+            
             const handleUsePotion = (itemToUse) => {
                 if (!isPlayerTurn || !monster) return;
+                setIsPlayerTurn(false);
+                setShowInventory(false);
 
                 if (itemToUse.effect?.type === 'heal') {
                     setPlayerStats(prev => {
@@ -1674,18 +1774,15 @@
                         const newInventory = prev.inventory.map(item =>
                             item.id === itemToUse.id ? { ...item, quantity: item.quantity - 1 } : item
                         ).filter(item => item.quantity > 0);
-                        
                         addLog(`${playerStats.playerName}이(가) ${itemToUse.name}을(를) 사용해 HP를 ${itemToUse.effect.amount} 회복했다.`, 'player-turn');
                         return { ...prev, hp: newHp, inventory: newInventory };
                     });
-                    
-                    setShowInventory(false);
-                    setIsPlayerTurn(false);
                 } else if (itemToUse.effect?.type === 'damage_enemy') {
                     const damage = itemToUse.effect.amount;
                     addLog(`${playerStats.playerName}이(가) ${itemToUse.name}을(를) 던져 ${monster.name}에게 ${damage}의 피해를 입혔다!`, 'player-turn');
                     addDamagePopup(String(damage), false, 'enemy');
 
+                    const newMonsterHp = monster.hp - damage;
                     setPlayerStats(prev => {
                         const newInventory = prev.inventory.map(item =>
                             item.id === itemToUse.id ? { ...item, quantity: item.quantity - 1 } : item
@@ -1693,13 +1790,20 @@
                         return { ...prev, inventory: newInventory };
                     });
                     
-                    setShowInventory(false);
-                    handlePlayerAction(false, damage);
+                    if (newMonsterHp <= 0) {
+                        setMonster({ ...monster, hp: 0 });
+                        handleMonsterDefeated();
+                        return;
+                    }
+                    setMonster({ ...monster, hp: newMonsterHp });
                 }
+                setUltimateCharge(prev => Math.min(5, prev + 1));
             };
-            
+
             const handleUseUltimate = () => {
                 if (ultimateCharge < 5 || !isPlayerTurn || !monster) return;
+                setIsPlayerTurn(false);
+                
                 const playerClass = playerStats.playerClass || 'Adventurer';
                 let damage = 0;
                 let logMessage = '';
@@ -1707,18 +1811,24 @@
                 if (playerClass === 'Warrior') {
                     damage = Math.floor(totalAttack * 3);
                     damage = Math.max(1, damage - monster.defense);
-                    if (Math.random() < 0.5) {
+                    const stunApplied = Math.random() < 0.5;
+                    if (stunApplied) {
                         setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
                         logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입히고 기절시켰다!`;
                     } else {
-                         logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
+                        logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
                     }
                 } else if (playerClass === 'Archer') {
-                    const critMultiplier = (playerStats.equipment.weapon?.critDamageMultiplier || 1.5) * 2;
+                    const weapon = playerStats.equipment.weapon;
+                    const critMultiplier = (weapon?.critDamageMultiplier || 1.5) * 2;
                     damage = Math.floor(totalAttack * critMultiplier);
                     damage = Math.max(1, damage - monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Archer.name}'! ${monster.name}에게 ${damage}의 치명적인 피해를 입혔다!`;
-                } else {
+                } else if (playerClass === 'Magician') {
+                    damage = Math.floor(totalAttack * 4);
+                    damage = Math.max(1, damage - monster.defense);
+                    logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
+                } else { // Adventurer
                     damage = Math.floor(totalAttack * 2.5);
                     damage = Math.max(1, damage - monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
@@ -1727,580 +1837,492 @@
                 addLog(logMessage, 'player-turn');
                 addDamagePopup(String(damage), true, 'enemy');
                 setUltimateCharge(0);
-                handlePlayerAction(false, damage);
-            };
 
+                const newMonsterHp = monster.hp - damage;
+                if (newMonsterHp <= 0) {
+                    setMonster({ ...monster, hp: 0 });
+                    handleMonsterDefeated();
+                } else {
+                    setMonster(m => ({ ...m, hp: newMonsterHp }));
+                }
+            };
+            
             useEffect(() => {
-                if (!isPlayerTurn && monster && monster.hp > 0 && playerStats.hp > 0) {
+                if (!isPlayerTurn && monster?.hp > 0) {
                     const timer = setTimeout(() => handleEnemyTurn(), 1000);
                     return () => clearTimeout(timer);
                 }
-            }, [isPlayerTurn, monster, playerStats.hp, handleEnemyTurn]);
+            }, [isPlayerTurn, monster, handleEnemyTurn]);
 
             if (!monster) return <div className="card">로딩 중...</div>;
 
             return (
                 <div className="card">
                     <h2>{dungeon.name} - 스테이지 {currentStage}/{dungeon.stages}</h2>
-                     {showInventory && (
+                    {showInventory && (
                         <div className="modal-backdrop">
-                            <div className="modal-content">
+                            <div className="modal-content card">
                                 <h3>아이템 사용</h3>
-                                <div className="battle-inventory-list">
-                                    {playerConsumables.map(item => (
+                                <div className="inventory-list">
+                                    {playerConsumables.length > 0 ? playerConsumables.map(item => (
                                         <div key={item.id} className="inventory-item">
                                             <span><strong className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</strong> (x{item.quantity})</span>
                                             <button onClick={() => handleUsePotion(item)}>사용</button>
                                         </div>
-                                    ))}
+                                    )) : <p>사용할 수 있는 소모품이 없습니다.</p>}
                                 </div>
                                 <button onClick={() => setShowInventory(false)}>닫기</button>
                             </div>
                         </div>
                     )}
                      <div className="combat-screen">
-                         <div className={`character-container player-side ${playerAttacking ? 'attacking' : ''}`}>
+                        <div className={`character-container player-side ${playerAttacking ? 'attacking' : ''}`}>
                             <StatBar value={playerStats.hp} maxValue={playerStats.maxHp} color="#4caf50" label={playerStats.playerName} />
                             <span className="character">🧑‍🚀</span>
-                             {activePet && <span className="pet-character">
-                                {activePet.type === 'Griffin' ? '🦅' : activePet.type === 'Turtle' ? '🐢' : '🐲'}
-                            </span>}
-                            {damagePopups.filter(p => p.target === 'player').map(p => (
-                                <div key={p.id} className={`damage-popup ${p.isCrit ? 'crit' : ''}`}>{p.amount}</div>
-                            ))}
+                            {activePet && <span className="pet-character">{activePet.type === 'Griffin' ? '🦅' : activePet.type === 'Turtle' ? '🐢' : '🐲'}</span>}
+                            {damagePopups.filter(p => p.target === 'player').map(p => (<div key={p.id} className={`damage-popup ${p.isCrit ? 'crit' : ''}`}>{p.amount}</div>))}
                         </div>
                         <div className={`character-container enemy-side ${enemyAttacking ? 'attacking' : ''}`}>
                             <StatBar value={monster.hp} maxValue={monster.maxHp} color="#f44336" label={monster.name} />
                             <span className="character">{monster.emoji}</span>
-                             {damagePopups.filter(p => p.target === 'enemy').map(p => (
-                                <div key={p.id} className={`damage-popup ${p.isCrit ? 'crit' : ''}`}>{p.amount}</div>
-                            ))}
+                             {damagePopups.filter(p => p.target === 'enemy').map(p => (<div key={p.id} className={`damage-popup ${p.isCrit ? 'crit' : ''}`}>{p.amount}</div>))}
                         </div>
                     </div>
-                    
-                    <div className="battle-log" ref={el => el?.scrollTo(0, el.scrollHeight)}>
-                        {battleLog}
-                    </div>
-
+                    <div className="battle-log" ref={el => el?.scrollTo(0, el.scrollHeight)}>{battleLog}</div>
                     <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                        {monster.hp <= 0 || playerStats.hp <= 0 ? (
-                            <p>다음으로 진행 중...</p>
+                        {monster.hp <= 0 ? (
+                            <p>다음 스테이지로 이동 중...</p>
                         ) : (
-                            <div className="battle-actions">
+                             <div className="battle-actions">
                                 <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
                                 <button onClick={() => setShowInventory(true)} disabled={!isPlayerTurn}>아이템</button>
-                                <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">
-                                    궁극기 ({ultimateCharge}/5)
-                                </button>
+                                <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">궁극기 ({ultimateCharge}/5)</button>
                             </div>
                         )}
                     </div>
                 </div>
             );
         };
-
-        const DungeonSelectionView = ({ setView, startDungeon }) => {
+        
+        const DungeonView = ({ setView, setCurrentDungeon }) => {
             return (
                 <div className="card">
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
-                    <h2>던전 선택</h2>
+                    <h2>던전</h2>
+                    <p>도전할 던전을 선택하세요.</p>
                     <div className="dungeon-list">
                         {allDungeons.map(dungeon => (
-                            <div key={dungeon.id} className="card dungeon-card">
-                                <h3>{dungeon.name} (Lv.{dungeon.difficulty})</h3>
+                            <div key={dungeon.id} className="dungeon-card">
+                                <h3>{dungeon.name} (난이도: {dungeon.difficulty})</h3>
                                 <p>{dungeon.description}</p>
-                                <p>스테이지: {dungeon.stages}</p>
                                 <div className="dungeon-card-rewards">
-                                    <strong>주요 보상:</strong>
+                                    <h4>주요 보상:</h4>
                                     <ul>
-                                        <li>{formatNumber(dungeon.rewards.gold)} G, {formatNumber(dungeon.rewards.xp)} XP</li>
+                                        <li>{formatNumber(dungeon.rewards.xp)} XP</li>
+                                        <li>{formatNumber(dungeon.rewards.gold)} G</li>
                                         {dungeon.rewards.items.map(item => (
-                                            <li key={item.itemId}>{allItems.find(i => i.id === item.itemId)?.name} x{item.quantity}</li>
+                                            <li key={item.itemId}>{allItems.find(i=>i.id === item.itemId)?.name} x{item.quantity}</li>
                                         ))}
                                     </ul>
                                 </div>
-                                <button onClick={() => startDungeon(dungeon)}>입장</button>
+                                <button onClick={() => setCurrentDungeon(dungeon)}>도전</button>
                             </div>
                         ))}
                     </div>
                 </div>
             );
         };
-
+        
         const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
-            const [tab, setTab] = useState('enhance');
             const [selectedItem, setSelectedItem] = useState(null);
 
-            const handleEnhance = () => {
-                if (!selectedItem) return;
+            const enhancableItems = useMemo(() => {
+                return playerStats.inventory
+                    .filter(item => item.type === ItemType.WEAPON || item.type === ItemType.ARMOR)
+                    .map(item => ({ ...item, uniqueId: `${item.id}-${item.enhancementLevel || 0}` }));
+            }, [playerStats.inventory]);
 
-                const level = selectedItem.enhancementLevel || 0;
-                const cost = 100 * (level + 1);
-                const materialCost = Math.ceil((level + 1) / 2);
-                const magicStone = playerStats.inventory.find(i => i.id === 12);
-
-                if (playerStats.gold < cost) {
-                    alert("골드가 부족합니다.");
-                    return;
-                }
-                if (!magicStone || magicStone.quantity < materialCost) {
-                    alert("마력의 돌이 부족합니다.");
-                    return;
-                }
-
-                const successChance = Math.max(0.1, 1 - (level * 0.08));
+            const getEnhancementCost = (item) => {
+                if (!item) return { gold: 0, materials: [] };
+                const level = item.enhancementLevel || 0;
+                const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10 };
                 
-                setPlayerStats(prev => {
-                    const newInventory = [...prev.inventory];
-                    const stoneIndex = newInventory.findIndex(i => i.id === 12);
-                    newInventory[stoneIndex] = {...newInventory[stoneIndex], quantity: newInventory[stoneIndex].quantity - materialCost};
+                const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level)) * gradeMultiplier[item.grade];
+                
+                let materialQuantity = 0;
+                if(level < 3) materialQuantity = 1 + level;
+                else if (level < 6) materialQuantity = 5 + (level - 3) * 2;
+                else if (level < 9) materialQuantity = 15 + (level - 6) * 5;
+                else materialQuantity = 40 + (level - 9) * 10;
 
-                    if (Math.random() < successChance) {
-                        alert("강화에 성공했습니다!");
-                        const itemIndex = newInventory.findIndex(i => i.id === selectedItem.id && i.enhancementLevel === selectedItem.enhancementLevel);
-                        
-                        // create a new unique item instance for the enhanced item
-                        const enhancedItem = {
-                            ...selectedItem,
-                            enhancementLevel: level + 1,
-                            quantity: 1,
-                        };
-                        
-                        if (newInventory[itemIndex].quantity > 1) {
-                            newInventory[itemIndex].quantity -= 1;
-                            newInventory.push(enhancedItem);
-                        } else {
-                            newInventory[itemIndex] = enhancedItem;
-                        }
-                        
-                        setSelectedItem(enhancedItem); // update selected item view
-                        
-                         return { ...prev, gold: prev.gold - cost, inventory: newInventory.filter(i => i.quantity > 0) };
+                materialQuantity = Math.floor(materialQuantity * (gradeMultiplier[item.grade] / 2 + 0.5));
 
-                    } else {
-                        alert("강화에 실패했습니다...");
-                         return { ...prev, gold: prev.gold - cost, inventory: newInventory.filter(i => i.quantity > 0) };
-                    }
-                });
+                return {
+                    gold: goldCost,
+                    materials: [{ materialId: 12, quantity: materialQuantity }]
+                };
+            };
+            
+            const enhancementCost = getEnhancementCost(selectedItem);
+
+            const canEnhance = () => {
+                if (!selectedItem) return false;
+                if (playerStats.gold < enhancementCost.gold) return false;
+                
+                for (const mat of enhancementCost.materials) {
+                    const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
+                    if (!playerMat || playerMat.quantity < mat.quantity) return false;
+                }
+                return true;
             };
 
-            const handleCraft = (recipe) => {
-                // Check materials
-                for (const mat of recipe.materials) {
-                    const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
-                    if (!playerMat || playerMat.quantity < mat.quantity) {
-                        alert(`${allMaterials.find(m => m.id === mat.materialId)?.name}이(가) 부족합니다.`);
-                        return;
-                    }
+            const handleEnhance = () => {
+                if (!canEnhance()) {
+                    alert('재료 또는 골드가 부족합니다.');
+                    return;
                 }
 
                 setPlayerStats(prev => {
                     let newInventory = [...prev.inventory];
-
-                    // Consume materials
-                    recipe.materials.forEach(mat => {
+                    
+                    // Deduct cost
+                    let newGold = prev.gold - enhancementCost.gold;
+                    enhancementCost.materials.forEach(mat => {
                         const matIndex = newInventory.findIndex(i => i.id === mat.materialId);
                         newInventory[matIndex].quantity -= mat.quantity;
                     });
                     newInventory = newInventory.filter(i => i.quantity > 0);
 
-                    // Add result item
-                    const existingItem = newInventory.find(i => i.id === recipe.result.id && !i.enhancementLevel);
-                    if (existingItem) {
-                        existingItem.quantity += 1;
+                    // Find and remove old item
+                    const itemIndex = newInventory.findIndex(i => i.id === selectedItem.id && (i.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0));
+                    if (newInventory[itemIndex].quantity > 1) {
+                         newInventory[itemIndex].quantity--;
                     } else {
-                        newInventory.push({ ...recipe.result, quantity: 1 });
+                        newInventory.splice(itemIndex, 1);
+                    }
+
+                    // Add new enhanced item
+                    const newEnhancedItem = {
+                        ...selectedItem,
+                        enhancementLevel: (selectedItem.enhancementLevel || 0) + 1,
+                        quantity: 1,
+                    };
+                    delete newEnhancedItem.uniqueId;
+
+                    const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
+                    if (existingStack) {
+                        existingStack.quantity++;
+                    } else {
+                        newInventory.push(newEnhancedItem);
+                    }
+
+                    // Check if equipped item was enhanced
+                    let newEquipment = prev.equipment;
+                    if (prev.equipment.weapon?.id === selectedItem.id && (prev.equipment.weapon.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0)) {
+                        newEquipment.weapon = newEnhancedItem;
+                    }
+                    if (prev.equipment.armor?.id === selectedItem.id && (prev.equipment.armor.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0)) {
+                        newEquipment.armor = newEnhancedItem;
                     }
                     
-                    // Check for quest progress
-                    const updatedQuests = prev.activeQuests.map(quest => {
-                        if (!quest.isCompleted && quest.type === 'CRAFT_ITEM' && quest.targetId === recipe.result.id) {
-                             return { ...quest, currentProgress: quest.currentProgress + 1 };
-                        }
-                        return quest;
-                    });
+                    setSelectedItem(newEnhancedItem);
 
-                    return { ...prev, inventory: newInventory, activeQuests: updatedQuests };
+                    return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
                 });
-
-                alert(`${recipe.result.name} 제작에 성공했습니다!`);
+                alert('강화에 성공했습니다!');
             };
-
-            const enhanceableItems = playerStats.inventory.filter(i => (i.type === ItemType.WEAPON || i.type === ItemType.ARMOR));
 
             return (
                 <div className="card">
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
                     <h2>대장간</h2>
-                    <div className="shop-tabs">
-                        <button className={tab === 'enhance' ? 'active' : ''} onClick={() => { setTab('enhance'); setSelectedItem(null); }}>강화</button>
-                        <button className={tab === 'craft' ? 'active' : ''} onClick={() => { setTab('craft'); setSelectedItem(null); }}>제작</button>
+                    <div className="blacksmith-container">
+                        <div className="item-list-panel card">
+                            <h3>강화할 아이템 선택</h3>
+                            {enhancableItems.map(item => (
+                                <div 
+                                    key={item.uniqueId} 
+                                    className={`list-item ${selectedItem?.uniqueId === item.uniqueId ? 'selected' : ''}`}
+                                    onClick={() => setSelectedItem(item)}
+                                >
+                                    <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="enhancement-panel card">
+                            {selectedItem ? (
+                                <>
+                                    <h3>{getDisplayName(selectedItem)} 강화</h3>
+                                    <div className="enhancement-stats">
+                                        {selectedItem.type === ItemType.WEAPON && <p>공격력: {selectedItem.damage + ((selectedItem.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedItem.damage + ((selectedItem.enhancementLevel || 0) + 1) * 2}</p>}
+                                        {selectedItem.type === ItemType.ARMOR && <p>방어력: {selectedItem.defense + (selectedItem.enhancementLevel || 0)} <span className="arrow">→</span> {selectedItem.defense + (selectedItem.enhancementLevel || 0) + 1}</p>}
+                                    </div>
+                                    <h4>필요 재료</h4>
+                                    <ul className="material-list">
+                                        <li className={playerStats.gold >= enhancementCost.gold ? 'sufficient' : 'insufficient'}>
+                                            골드: {formatNumber(enhancementCost.gold)} G (보유: {formatNumber(playerStats.gold)})
+                                        </li>
+                                        {enhancementCost.materials.map(mat => {
+                                            const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
+                                            const playerQty = playerMat?.quantity || 0;
+                                            const matInfo = allItems.find(i => i.id === mat.materialId);
+                                            return (
+                                                <li key={mat.materialId} className={playerQty >= mat.quantity ? 'sufficient' : 'insufficient'}>
+                                                    {matInfo.name}: {mat.quantity} (보유: {playerQty})
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                    <button onClick={handleEnhance} disabled={!canEnhance()}>강화하기</button>
+                                </>
+                            ) : <p>강화할 아이템을 선택해주세요.</p>}
+                        </div>
                     </div>
-                    {tab === 'enhance' ? (
-                        <div className="blacksmith-container">
-                            <div className="item-list-panel">
-                                <h3>강화할 아이템 선택</h3>
-                                {enhanceableItems.map((item, index) => (
-                                    <div key={`${item.id}-${index}-${item.enhancementLevel || 0}`} 
-                                         className={`list-item ${selectedItem === item ? 'selected' : ''}`}
-                                         onClick={() => setSelectedItem(item)}>
-                                        <strong className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</strong>
-                                    </div>
-                                ))}
-                            </div>
-                            <div>
-                                {selectedItem ? (
-                                    <div className="card">
-                                        <h3>{getDisplayName(selectedItem)}</h3>
-                                        <div className="enhancement-stats">
-                                            {selectedItem.damage && <p>공격력: {selectedItem.damage + ((selectedItem.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedItem.damage + ((selectedItem.enhancementLevel || 0) + 1) * 2}</p>}
-                                            {selectedItem.defense && <p>방어력: {selectedItem.defense + (selectedItem.enhancementLevel || 0)} <span className="arrow">→</span> {selectedItem.defense + (selectedItem.enhancementLevel || 0) + 1}</p>}
-                                        </div>
-                                        <hr />
-                                        <p><strong>비용:</strong> {100 * ((selectedItem.enhancementLevel || 0) + 1)} G</p>
-                                        <p><strong>필요 재료:</strong> 마력의 돌 x{Math.ceil(((selectedItem.enhancementLevel || 0) + 1) / 2)}</p>
-                                        <p><strong>성공 확률:</strong> {Math.max(10, 100 - ((selectedItem.enhancementLevel || 0) * 8))}%</p>
-                                        <button onClick={handleEnhance}>강화</button>
-                                    </div>
-                                ) : <p>강화할 아이템을 선택하세요.</p>}
-                            </div>
-                        </div>
-                    ) : (
-                         <div className="crafting-container">
-                            {allRecipes.map(recipe => {
-                                const canCraft = recipe.materials.every(mat => {
-                                    const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
-                                    return playerMat && playerMat.quantity >= mat.quantity;
-                                });
-
-                                return (
-                                    <div key={recipe.id} className="card" style={{marginBottom: '15px'}}>
-                                        <h3>{recipe.name}</h3>
-                                        <p>결과: <strong className={ItemGradeInfo[recipe.result.grade]?.class}>{recipe.result.name}</strong></p>
-                                        <ul className="material-list">
-                                            <strong>필요 재료:</strong>
-                                            {recipe.materials.map(mat => {
-                                                const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
-                                                const haveEnough = playerMat && playerMat.quantity >= mat.quantity;
-                                                return (
-                                                    <li key={mat.materialId} className={haveEnough ? 'sufficient' : 'insufficient'}>
-                                                        {allMaterials.find(m => m.id === mat.materialId)?.name}: {mat.quantity} (보유: {playerMat?.quantity || 0})
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                        <button onClick={() => handleCraft(recipe)} disabled={!canCraft}>제작</button>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
                 </div>
             );
         };
-
+        
         const QuestBoardView = ({ playerStats, setPlayerStats, setView }) => {
+            const [availableQuests, setAvailableQuests] = useState([]);
 
-            const handleAcceptQuest = (questId) => {
-                const questData = allQuests.find(q => q.id === questId);
-                if (questData && playerStats.activeQuests.length < 5) {
-                    setPlayerStats(prev => ({
-                        ...prev,
-                        activeQuests: [...prev.activeQuests, { ...questData, currentProgress: 0, isCompleted: false }]
-                    }));
-                } else if (playerStats.activeQuests.length >= 5) {
-                    alert("최대 5개의 퀘스트만 동시에 진행할 수 있습니다.");
-                }
+            useEffect(() => {
+                const acceptedQuestIds = playerStats.activeQuests.map(q => q.id);
+                const potentialQuests = allQuests.filter(q => !acceptedQuestIds.includes(q.id) && (q.id <= 3 || playerStats.level >= (q.id-3) * 2));
+                setAvailableQuests(potentialQuests.slice(0, 5)); // Show up to 5 available quests
+            }, [playerStats]);
+
+            const acceptQuest = (quest) => {
+                const newQuest = { ...quest, currentProgress: 0, isCompleted: false };
+                setPlayerStats(prev => ({
+                    ...prev,
+                    activeQuests: [...prev.activeQuests, newQuest]
+                }));
             };
 
-            const handleClaimReward = (questId) => {
-                const quest = playerStats.activeQuests.find(q => q.id === questId);
-                if (!quest || !quest.isCompleted) return;
-                
-                alert(`퀘스트 '${quest.title}' 보상을 획득했습니다!`);
-
-                setPlayerStats(prev => {
+            const completeQuest = (quest) => {
+                 setPlayerStats(prev => {
+                    const newQuests = prev.activeQuests.filter(q => q.id !== quest.id);
                     let newGold = prev.gold + quest.rewards.gold;
                     let newXp = prev.xp + quest.rewards.xp;
                     let newInventory = [...prev.inventory];
-
                     quest.rewards.items?.forEach(rewardItem => {
                         const itemInfo = allItems.find(i => i.id === rewardItem.itemId);
-                        if (itemInfo) {
-                            const existingItem = newInventory.find(i => i.id === itemInfo.id && !i.enhancementLevel);
-                            if (existingItem) {
-                                existingItem.quantity += rewardItem.quantity;
-                            } else {
-                                newInventory.push({ ...itemInfo, quantity: rewardItem.quantity });
-                            }
-                        }
+                        const existingItem = newInventory.find(i => i.id === itemInfo.id && !(i.enhancementLevel > 0));
+                        if(existingItem) existingItem.quantity += rewardItem.quantity;
+                        else newInventory.push({...itemInfo, quantity: rewardItem.quantity});
                     });
-                    
-                    const townXpGained = Math.floor(quest.rewards.xp / 4);
+
+                    // Level up check
+                    let newLevel = prev.level;
+                    let newMaxHp = prev.maxHp;
+                    let newAttack = prev.attack;
+                    let newDefense = prev.defense;
+                    let newXpToNextLevel = prev.xpToNextLevel;
+                    while (newXp >= newXpToNextLevel) {
+                        newXp -= newXpToNextLevel;
+                        newLevel++;
+                        newMaxHp += 10;
+                        newAttack += 2;
+                        newDefense += 1;
+                        newXpToNextLevel = Math.floor(newXpToNextLevel * 1.2);
+                        alert(`레벨 업! ${newLevel}레벨이 되었다!`);
+                    }
 
                     return {
                         ...prev,
+                        activeQuests: newQuests,
                         gold: newGold,
                         xp: newXp,
                         inventory: newInventory,
-                        townXp: prev.townXp + townXpGained,
-                        activeQuests: prev.activeQuests.filter(q => q.id !== questId)
-                    };
-                });
+                        level: newLevel,
+                        maxHp: newMaxHp,
+                        attack: newAttack,
+                        defense: newDefense,
+                        xpToNextLevel: newXpToNextLevel,
+                    }
+                 });
+                 alert(`${quest.title} 퀘스트 완료!`);
             };
             
-            useEffect(() => {
-                // Automatically mark quests as completed
-                setPlayerStats(prev => {
-                    const updatedQuests = prev.activeQuests.map(quest => {
-                        if (!quest.isCompleted && quest.currentProgress >= quest.targetQuantity) {
-                            return { ...quest, isCompleted: true };
-                        }
-                        return quest;
-                    });
-                    return { ...prev, activeQuests: updatedQuests };
-                });
-            }, [playerStats.activeQuests, setPlayerStats]);
-            
-            const availableQuests = allQuests.filter(q => !playerStats.activeQuests.some(aq => aq.id === q.id));
+            const getItemCount = (itemId) => {
+                return playerStats.inventory.find(i => i.id === itemId)?.quantity || 0;
+            };
+
+            const checkCompletion = (quest) => {
+                if(quest.type === 'COLLECT_ITEM') {
+                    return getItemCount(quest.targetId) >= quest.targetQuantity;
+                }
+                return quest.currentProgress >= quest.targetQuantity;
+            };
+
 
             return (
-                 <div className="card quest-board-container">
+                <div className="card">
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
                     <h2>퀘스트 게시판</h2>
-
                     <div className="quest-section">
-                        <h3>진행 중인 퀘스트 ({playerStats.activeQuests.length}/5)</h3>
+                        <h3>진행 중인 퀘스트</h3>
                         {playerStats.activeQuests.length > 0 ? playerStats.activeQuests.map(quest => {
-                            const progress = Math.min(quest.currentProgress, quest.targetQuantity);
+                            const isComplete = checkCompletion(quest);
+                            const progress = quest.type === 'COLLECT_ITEM' ? getItemCount(quest.targetId) : quest.currentProgress;
                             return (
-                                <div key={quest.id} className={`card quest-card ${quest.isCompleted ? 'completed' : ''}`}>
-                                    <div className="quest-info">
+                                <div key={quest.id} className={`card quest-card ${isComplete ? 'completed' : ''}`}>
+                                    <div>
                                         <h4>{quest.title}</h4>
                                         <p>{quest.description}</p>
                                         <div className="quest-progress-bar-container">
                                             <div className="quest-progress-bar-fill" style={{width: `${(progress / quest.targetQuantity) * 100}%`}}></div>
                                         </div>
-                                        <span>{progress} / {quest.targetQuantity}</span>
-                                        <div className="quest-rewards">
-                                            <strong>보상:</strong> {quest.rewards.gold} G, {quest.rewards.xp} XP
-                                        </div>
+                                        <small>{progress} / {quest.targetQuantity}</small>
                                     </div>
-                                    {quest.isCompleted && <button onClick={() => handleClaimReward(quest.id)}>보상 받기</button>}
+                                    <button onClick={() => completeQuest(quest)} disabled={!isComplete}>완료</button>
                                 </div>
-                            );
+                            )
                         }) : <p>진행 중인 퀘스트가 없습니다.</p>}
                     </div>
-
-                    <div className="quest-section">
+                     <div className="quest-section">
                         <h3>새로운 퀘스트</h3>
                         {availableQuests.map(quest => (
                             <div key={quest.id} className="card quest-card">
-                                <div className="quest-info">
+                                 <div>
                                     <h4>{quest.title}</h4>
                                     <p>{quest.description}</p>
-                                     <div className="quest-rewards">
-                                        <strong>보상:</strong> {quest.rewards.gold} G, {quest.rewards.xp} XP
-                                    </div>
                                 </div>
-                                <button onClick={() => handleAcceptQuest(quest.id)} disabled={playerStats.activeQuests.length >= 5}>수락</button>
+                                <button onClick={() => acceptQuest(quest)}>수락</button>
                             </div>
                         ))}
                     </div>
                 </div>
-            );
+            )
         };
-
+        
         const GachaShrineView = ({ playerStats, setPlayerStats, setView }) => {
             const [gachaResult, setGachaResult] = useState(null);
 
-            const performItemGacha = () => {
-                if (playerStats.gold < ITEM_GACHA_COST) {
-                    alert("골드가 부족합니다.");
+            const performGacha = (type) => {
+                const cost = type === 'pet' ? PET_GACHA_COST : ITEM_GACHA_COST;
+                if (playerStats.gold < cost) {
+                    alert('골드가 부족합니다.');
                     return;
                 }
 
-                setPlayerStats(prev => ({...prev, gold: prev.gold - ITEM_GACHA_COST}));
-
-                const rand = Math.random();
-                let grade;
-                if (rand < 0.01) grade = ItemGrade.LEGENDARY; // 1%
-                else if (rand < 0.06) grade = ItemGrade.EPIC; // 5%
-                else if (rand < 0.21) grade = ItemGrade.RARE; // 15%
-                else if (rand < 0.51) grade = ItemGrade.UNCOMMON; // 30%
-                else grade = ItemGrade.COMMON; // 49%
-
-                const itemsOfGrade = allItems.filter(item => item.grade === grade && item.type !== ItemType.MATERIAL);
-                const drawnItem = itemsOfGrade[Math.floor(Math.random() * itemsOfGrade.length)];
-
-                setPlayerStats(prev => {
-                    const newInventory = [...prev.inventory];
-                    const existingItem = newInventory.find(i => i.id === drawnItem.id && !i.enhancementLevel);
-                    if (existingItem) {
-                        existingItem.quantity += 1;
-                    } else {
-                        newInventory.push({ ...drawnItem, quantity: 1 });
-                    }
-                    return { ...prev, inventory: newInventory };
-                });
-
-                setGachaResult({ type: 'item', item: drawnItem });
-            };
-            
-             const performPetGacha = () => {
-                if (playerStats.gold < PET_GACHA_COST) {
-                    alert("골드가 부족합니다.");
-                    return;
-                }
-
-                setPlayerStats(prev => ({...prev, gold: prev.gold - PET_GACHA_COST}));
+                setPlayerStats(prev => ({...prev, gold: prev.gold - cost}));
                 
-                const rand = Math.random();
-                let grade;
-                if (rand < 0.05) grade = ItemGrade.EPIC; // 5%
-                else grade = ItemGrade.RARE; // 95%
-                
-                const petsOfGrade = allPets.filter(p => p.grade === grade);
-                const drawnPetData = petsOfGrade[Math.floor(Math.random() * petsOfGrade.length)];
-                const newPet = { ...drawnPetData, level: 1, xp: 0, xpToNextLevel: 100 };
+                let drawnItem;
+                if(type === 'pet') {
+                    const rand = Math.random();
+                    if(rand < 0.05) drawnItem = allPets.find(p => p.grade === ItemGrade.LEGENDARY);
+                    else if (rand < 0.25) drawnItem = allPets.find(p => p.grade === ItemGrade.EPIC);
+                    else drawnItem = allPets[Math.floor(Math.random() * 2)]; // Two rare pets
+                    
+                    setPlayerStats(prev => ({...prev, pets: [...prev.pets, drawnItem]}));
+                } else { // item gacha
+                    const rand = Math.random();
+                    let gradeToDraw;
+                    if(rand < 0.01) gradeToDraw = ItemGrade.MYTHIC;
+                    else if (rand < 0.05) gradeToDraw = ItemGrade.LEGENDARY;
+                    else if (rand < 0.20) gradeToDraw = ItemGrade.EPIC;
+                    else if (rand < 0.50) gradeToDraw = ItemGrade.RARE;
+                    else gradeToDraw = ItemGrade.UNCOMMON;
+                    
+                    const itemsOfGrade = allItems.filter(i => i.grade === gradeToDraw && i.type !== ItemType.MATERIAL && i.type !== ItemType.CONSUMABLE);
+                    drawnItem = itemsOfGrade[Math.floor(Math.random() * itemsOfGrade.length)];
 
-                setPlayerStats(prev => ({ ...prev, pets: [...prev.pets, newPet]}));
-                setGachaResult({ type: 'pet', pet: newPet });
-            };
-
-
-            return (
-                <div className="card gacha-shrine">
-                    {gachaResult && (
-                        <div className="gacha-result" onClick={() => setGachaResult(null)}>
-                            <div className="card">
-                                <h2>획득!</h2>
-                                {gachaResult.type === 'item' && gachaResult.item && <>
-                                    <p className={`gacha-item-grade ${ItemGradeInfo[gachaResult.item.grade]?.class}`}>{ItemGradeInfo[gachaResult.item.grade]?.name}</p>
-                                    <p className="gacha-item-name">{gachaResult.item.name}</p>
-                                </>}
-                                 {gachaResult.type === 'pet' && gachaResult.pet && <>
-                                    <p className={`gacha-item-grade ${ItemGradeInfo[gachaResult.pet.grade]?.class}`}>{ItemGradeInfo[gachaResult.pet.grade]?.name}</p>
-                                    <p className="gacha-item-name">{gachaResult.pet.name}</p>
-                                </>}
-                                <button onClick={() => setGachaResult(null)}>확인</button>
-                            </div>
-                        </div>
-                    )}
-                    <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
-                    <h2>뽑기 성소</h2>
-                    <p>운명을 시험하고 강력한 아이템과 반려동물을 얻으세요!</p>
-                    <div className="gacha-buttons-container">
-                        <button className="gacha-button" onClick={performItemGacha} disabled={playerStats.gold < ITEM_GACHA_COST}>
-                            아이템 뽑기<br/>({formatNumber(ITEM_GACHA_COST)} G)
-                        </button>
-                         <button className="gacha-button pet-gacha-button" onClick={performPetGacha} disabled={playerStats.gold < PET_GACHA_COST}>
-                            반려동물 뽑기<br/>({formatNumber(PET_GACHA_COST)} G)
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        const TownHallView = ({ playerStats, setPlayerStats, setView }) => {
-            const currentLevelIndex = playerStats.townLevel - 1;
-            const currentLevelInfo = townLevels[currentLevelIndex];
-            const nextLevelInfo = townLevels[currentLevelIndex + 1];
-
-            const isMaxLevel = !nextLevelInfo || nextLevelInfo.costToUpgrade === Infinity;
-
-            // XP bar calculation
-            const baseXpForCurrentLevel = currentLevelInfo.xpRequired;
-            const xpNeededForNextLevel = isMaxLevel ? baseXpForCurrentLevel : nextLevelInfo.xpRequired;
-            const xpProgressInCurrentLevel = playerStats.townXp - baseXpForCurrentLevel;
-            const xpRangeForCurrentLevel = xpNeededForNextLevel - baseXpForCurrentLevel;
-
-            const canUpgrade = !isMaxLevel && 
-                               playerStats.gold >= currentLevelInfo.costToUpgrade && 
-                               playerStats.townXp >= nextLevelInfo.xpRequired;
-
-            const handleUpgrade = () => {
-                if (!canUpgrade) {
-                     if (playerStats.townXp < nextLevelInfo.xpRequired) {
-                        alert("마을 경험치가 부족합니다.");
-                    } else if (playerStats.gold < currentLevelInfo.costToUpgrade) {
-                        alert("업그레이드 비용이 부족합니다.");
-                    }
-                    return;
+                    setPlayerStats(prev => {
+                        const newInventory = [...prev.inventory];
+                        const existing = newInventory.find(i => i.id === drawnItem.id && !i.enhancementLevel);
+                        if (existing) existing.quantity++;
+                        else newInventory.push({...drawnItem, quantity: 1});
+                        return {...prev, inventory: newInventory};
+                    });
                 }
-
-                setPlayerStats(prev => {
-                    alert(`마을을 Lv.${prev.townLevel + 1} ${nextLevelInfo.name}(으)로 업그레이드했습니다!`);
-                    return {
-                        ...prev,
-                        gold: prev.gold - currentLevelInfo.costToUpgrade,
-                        townLevel: prev.townLevel + 1,
-                    };
-                });
+                setGachaResult(drawnItem);
             };
 
             return (
                 <div className="card">
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
-                    <h2>마을 회관</h2>
-                    <h3>현재 마을: Lv.{playerStats.townLevel} {currentLevelInfo.name}</h3>
-
-                    {isMaxLevel ? (
-                        <p>마을이 최고 레벨에 도달했습니다!</p>
-                    ) : (
-                        <div className="town-hall-content">
-                            <StatBar 
-                                value={xpProgressInCurrentLevel > 0 ? xpProgressInCurrentLevel : 0} 
-                                maxValue={xpRangeForCurrentLevel > 0 ? xpRangeForCurrentLevel : 1} 
-                                color="#03dac6" 
-                                label={`마을 XP`} 
-                            />
-                             <div className="town-hall-upgrade-info">
-                                <h4>다음 레벨: Lv.{playerStats.townLevel + 1} {nextLevelInfo.name}</h4>
-                                <p>필요 총 경험치: {formatNumber(nextLevelInfo.xpRequired)} (현재: {formatNumber(playerStats.townXp)})</p>
-                                <p>업그레이드 비용: {formatNumber(currentLevelInfo.costToUpgrade)} G</p>
-                                <button onClick={handleUpgrade} disabled={!canUpgrade}>
-                                    업그레이드
-                                </button>
+                    <div className="gacha-shrine">
+                        <h2>뽑기 성소</h2>
+                        <p>운명을 시험하고 강력한 동료나 장비를 얻으세요!</p>
+                        <div style={{display: 'flex', justifyContent: 'center', gap: '20px', margin: '20px 0'}}>
+                            <button onClick={() => performGacha('item')} disabled={playerStats.gold < ITEM_GACHA_COST}>아이템 뽑기 ({ITEM_GACHA_COST} G)</button>
+                            <button onClick={() => performGacha('pet')} disabled={playerStats.gold < PET_GACHA_COST}>펫 뽑기 ({PET_GACHA_COST} G)</button>
+                        </div>
+                    </div>
+                    {gachaResult && (
+                        <div className="gacha-result" onClick={() => setGachaResult(null)}>
+                            <div className="card">
+                                <h2>획득!</h2>
+                                <div className={`gacha-item-grade ${ItemGradeInfo[gachaResult.grade].class}`}>{ItemGradeInfo[gachaResult.grade].name}</div>
+                                <div className="gacha-item-name">{gachaResult.name}</div>
+                                <p>화면을 클릭하여 닫기</p>
                             </div>
                         </div>
                     )}
                 </div>
             );
         };
+        
+        const TownHallView = ({ playerStats, setPlayerStats, setView }) => {
+            const currentLevelInfo = townLevels[playerStats.townLevel - 1];
+            const nextLevelInfo = townLevels[playerStats.townLevel] || null;
+
+            const handleUpgrade = () => {
+                if (nextLevelInfo && playerStats.gold >= nextLevelInfo.costToUpgrade) {
+                    setPlayerStats(prev => ({
+                        ...prev,
+                        gold: prev.gold - nextLevelInfo.costToUpgrade,
+                        townLevel: prev.townLevel + 1
+                    }));
+                    alert('마을이 발전했습니다!');
+                } else {
+                    alert('골드가 부족합니다.');
+                }
+            };
+            
+            return (
+                <div className="card">
+                    <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
+                    <h2>마을 회관</h2>
+                    <h3>현재 마을 등급: {currentLevelInfo.name} (Lv. {playerStats.townLevel})</h3>
+                    <StatBar value={playerStats.townXp} maxValue={nextLevelInfo ? nextLevelInfo.xpRequired : currentLevelInfo.xpRequired} color="#ff9800" label="마을 XP" />
+                    {nextLevelInfo && nextLevelInfo.costToUpgrade !== Infinity ? (
+                         <div className="town-hall-upgrade-info">
+                            <h4>다음 등급으로 발전: {nextLevelInfo.name}</h4>
+                            <p>필요 XP: {formatNumber(nextLevelInfo.xpRequired)}</p>
+                            <p>필요 골드: {formatNumber(nextLevelInfo.costToUpgrade)} G</p>
+                            <button onClick={handleUpgrade} disabled={playerStats.townXp < nextLevelInfo.xpRequired || playerStats.gold < nextLevelInfo.costToUpgrade}>
+                                발전시키기
+                            </button>
+                        </div>
+                    ) : <p>마을이 최대로 발전했습니다!</p>}
+                </div>
+            );
+        };
 
         const TrophyRoadView = ({ playerStats, setPlayerStats, setView }) => {
-
-            const handleClaimReward = (milestoneIndex) => {
-                const milestone = trophyRoadMilestones[milestoneIndex];
-                if (playerStats.trophies < milestone.trophies || playerStats.claimedTrophyRewards.includes(milestoneIndex)) {
-                    return;
-                }
-
-                setPlayerStats(prev => {
+            const handleClaim = (milestone) => {
+                 setPlayerStats(prev => {
+                    const newInventory = [...prev.inventory];
                     let newGold = prev.gold;
-                    let newInventory = [...prev.inventory];
+                    
+                    if (milestone.rewards.gold) newGold += milestone.rewards.gold;
+                    milestone.rewards.items?.forEach(itemReward => {
+                        const itemInfo = allItems.find(i => i.id === itemReward.itemId);
+                        const existing = newInventory.find(i => i.id === itemInfo.id && !i.enhancementLevel);
+                        if(existing) existing.quantity += itemReward.quantity;
+                        else newInventory.push({...itemInfo, quantity: itemReward.quantity});
+                    });
 
-                    if (milestone.rewards.gold) {
-                        newGold += milestone.rewards.gold;
-                    }
-                    if (milestone.rewards.items) {
-                         milestone.rewards.items.forEach(rewardItem => {
-                            const itemInfo = allItems.find(i => i.id === rewardItem.itemId);
-                            if(itemInfo) {
-                                const existingItem = newInventory.find(i => i.id === itemInfo.id && !i.enhancementLevel);
-                                if (existingItem) existingItem.quantity += rewardItem.quantity;
-                                else newInventory.push({ ...itemInfo, quantity: rewardItem.quantity });
-                            }
-                         });
-                    }
                     return {
                         ...prev,
                         gold: newGold,
                         inventory: newInventory,
-                        claimedTrophyRewards: [...prev.claimedTrophyRewards, milestoneIndex]
+                        claimedTrophyRewards: [...prev.claimedTrophyRewards, milestone.trophies]
                     };
-                });
+                 });
+                 alert('보상을 수령했습니다!');
             };
 
             return (
@@ -2308,23 +2330,19 @@
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
                     <h2>트로피 로드</h2>
                     <p className="current-trophies">현재 트로피: {formatNumber(playerStats.trophies)} 🏆</p>
-                    <div className="trophy-road-container">
-                        {trophyRoadMilestones.map((milestone, index) => {
+                    <div className="trophy-road-list">
+                        {trophyRoadMilestones.map(milestone => {
                             const isUnlocked = playerStats.trophies >= milestone.trophies;
-                            const isClaimed = playerStats.claimedTrophyRewards.includes(index);
+                            const isClaimed = playerStats.claimedTrophyRewards.includes(milestone.trophies);
                             return (
-                                <div key={index} className={`trophy-milestone ${isUnlocked ? 'unlocked' : ''} ${isClaimed ? 'claimed' : ''}`}>
+                                <div key={milestone.trophies} className={`trophy-milestone ${isUnlocked ? 'unlocked' : ''} ${isClaimed ? 'claimed' : ''}`}>
                                     <div>
-                                        <h4>{milestone.trophies} 🏆</h4>
-                                        <div>
-                                            {milestone.rewards.gold && <p>골드: {formatNumber(milestone.rewards.gold)}</p>}
-                                            {milestone.rewards.items?.map(item => (
-                                                <p key={item.itemId}>{allItems.find(i => i.id === item.itemId)?.name} x{item.quantity}</p>
-                                            ))}
-                                        </div>
+                                        <h4>{formatNumber(milestone.trophies)} 트로피 달성 보상</h4>
+                                        {milestone.rewards.gold && <p>{formatNumber(milestone.rewards.gold)} 골드</p>}
+                                        {milestone.rewards.items?.map(item => <p key={item.itemId}>{allItems.find(i=>i.id === item.itemId)?.name} x{item.quantity}</p>)}
                                     </div>
-                                    <button onClick={() => handleClaimReward(index)} disabled={!isUnlocked || isClaimed}>
-                                        {isClaimed ? '획득 완료' : '보상 받기'}
+                                    <button onClick={() => handleClaim(milestone)} disabled={!isUnlocked || isClaimed}>
+                                        {isClaimed ? '수령 완료' : '수령'}
                                     </button>
                                 </div>
                             );
@@ -2333,134 +2351,128 @@
                 </div>
             );
         };
-
-        const PetsView = ({ playerStats, setPlayerStats, setView }) => {
+        
+        const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
             const [selectedPet, setSelectedPet] = useState(null);
 
-            useEffect(() => {
-                if (playerStats.pets.length > 0 && !selectedPet) {
-                    setSelectedPet(playerStats.pets[0]);
+            const handleSetActivePet = () => {
+                if (selectedPet) {
+                    setPlayerStats(prev => ({ ...prev, activePetId: selectedPet.id }));
+                    alert(`${selectedPet.name}이(가) 전투에 참여합니다.`);
                 }
-            }, [playerStats.pets, selectedPet]);
+            };
+            
+            const handleReleasePet = () => {
+                 if (selectedPet) {
+                    setPlayerStats(prev => ({ ...prev, activePetId: null }));
+                    alert(`${selectedPet.name}이(가) 휴식을 취합니다.`);
+                }
+            };
 
-            const handleSetActivePet = (petId) => {
-                setPlayerStats(prev => ({ ...prev, activePetId: petId }));
+            const handleSellPet = (petToSell) => {
+                if (!petToSell) return;
+                if (petToSell.id === playerStats.activePetId) {
+                    alert('활성화된 펫은 판매할 수 없습니다.');
+                    return;
+                }
+                if (confirm(`${petToSell.name}을(를) ${petToSell.sellPrice} G에 판매하시겠습니까?`)) {
+                    setPlayerStats(prev => {
+                        const newPets = prev.pets.filter(p => p.id !== petToSell.id); // Simple removal, no stacking
+                        const newGold = prev.gold + petToSell.sellPrice;
+                        return { ...prev, pets: newPets, gold: newGold };
+                    });
+                    setSelectedPet(null);
+                    alert(`${petToSell.name} 판매 완료.`);
+                }
             };
 
             return (
                 <div className="card">
                     <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
-                    <h2>반려동물</h2>
-                    {playerStats.pets.length === 0 ? (
-                        <p>보유한 반려동물이 없습니다. 뽑기 성소에서 새로운 친구를 만나보세요!</p>
-                    ) : (
-                        <div className="pet-management-view">
-                            <div className="pet-list-container">
-                                <h3>나의 반려동물</h3>
-                                <div className="pet-list">
-                                    {playerStats.pets.map(pet => (
-                                        <div key={pet.id} className={`pet-card ${selectedPet?.id === pet.id ? 'active' : ''}`} onClick={() => setSelectedPet(pet)}>
-                                            <strong className={ItemGradeInfo[pet.grade]?.class}>{pet.name}</strong>
-                                            <span> (Lv.{pet.level})</span>
-                                            {playerStats.activePetId === pet.id && ' ✅'}
-                                        </div>
-                                    ))}
+                    <h2>반려동물 관리</h2>
+                    <div className="pet-management-view">
+                        <div className="pet-list-panel card">
+                            <h3>보유한 펫</h3>
+                            {playerStats.pets.length > 0 ? playerStats.pets.map(pet => (
+                                <div 
+                                    key={pet.id} 
+                                    className={`pet-card ${selectedPet?.id === pet.id ? 'selected' : ''} ${playerStats.activePetId === pet.id ? 'active' : ''}`}
+                                    onClick={() => setSelectedPet(pet)}
+                                >
+                                    <strong className={ItemGradeInfo[pet.grade].class}>{pet.name}</strong>
                                 </div>
-                            </div>
-                            <div className="pet-details-container card">
-                                {selectedPet ? (
-                                    <>
-                                        <h3>{selectedPet.name} <span className={ItemGradeInfo[selectedPet.grade]?.class}>({ItemGradeInfo[selectedPet.grade]?.name})</span></h3>
-                                        <p>레벨: {selectedPet.level}</p>
-                                        <StatBar value={selectedPet.xp} maxValue={selectedPet.xpToNextLevel} color="#fbc02d" label="XP" />
-                                        <p>공격력 보너스: +{selectedPet.attackBonus}</p>
-                                        <p>방어력 보너스: +{selectedPet.defenseBonus}</p>
-                                        <hr />
-                                        <h4>스킬: {selectedPet.skillName}</h4>
-                                        <p>{selectedPet.skillDescription}</p>
-                                        <button onClick={() => handleSetActivePet(selectedPet.id)} disabled={playerStats.activePetId === selectedPet.id}>
-                                            {playerStats.activePetId === selectedPet.id ? '활성화됨' : '활성화'}
-                                        </button>
-                                    </>
-                                ) : <p>반려동물을 선택하세요.</p>}
-                            </div>
+                            )) : <p>보유한 펫이 없습니다.</p>}
                         </div>
-                    )}
+                        <div className="pet-details-panel card">
+                            {selectedPet ? (
+                                <>
+                                    <h3>{selectedPet.name} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
+                                    <p>공격력 보너스: +{selectedPet.attackBonus}</p>
+                                    <p>방어력 보너스: +{selectedPet.defenseBonus}</p>
+                                    <h4>스킬: {selectedPet.skillName}</h4>
+                                    <p>{selectedPet.skillDescription}</p>
+                                    {playerStats.activePetId === selectedPet.id ? (
+                                        <button onClick={handleReleasePet}>휴식</button>
+                                    ) : (
+                                        <button onClick={handleSetActivePet}>활성화</button>
+                                    )}
+                                    <button onClick={() => handleSellPet(selectedPet)} style={{marginLeft: '10px', backgroundColor: '#c62828'}} disabled={playerStats.activePetId === selectedPet.id}>
+                                        판매 ({selectedPet.sellPrice} G)
+                                    </button>
+                                    {playerStats.activePetId === selectedPet.id && <small style={{display: 'block', marginTop: '5px'}}>활성화된 펫은 판매할 수 없습니다.</small>}
+                                </>
+                            ) : <p>펫을 선택하여 정보를 확인하세요.</p>}
+                        </div>
+                    </div>
                 </div>
             );
         };
 
+
         const App = () => {
-            const [playerStats, setPlayerStats] = useState(null);
+            const [playerStats, setPlayerStats] = useState(() => {
+                const savedGame = localStorage.getItem('rpgGameState');
+                return savedGame ? JSON.parse(savedGame) : getInitialPlayerStats();
+            });
             const [view, setView] = useState(View.TOWN);
-            const [selectedDungeon, setSelectedDungeon] = useState(null);
+            const [currentDungeon, setCurrentDungeon] = useState(null);
 
             useEffect(() => {
-                const savedData = localStorage.getItem('playerStats');
-                if (savedData) {
-                    setPlayerStats(JSON.parse(savedData));
-                } else {
-                    setPlayerStats(getInitialPlayerStats());
-                }
-            }, []);
-
-            useEffect(() => {
-                if (playerStats) {
-                    localStorage.setItem('playerStats', JSON.stringify(playerStats));
-                }
+                localStorage.setItem('rpgGameState', JSON.stringify(playerStats));
             }, [playerStats]);
 
-            // Full HP recovery in town
-            useEffect(() => {
-                if (view === View.TOWN) {
-                    setPlayerStats(prev => {
-                        if (prev && prev.hp < prev.maxHp) {
-                            return { ...prev, hp: prev.maxHp };
-                        }
-                        return prev;
-                    });
-                }
-            }, [view]);
-            
             const resetGame = () => {
-                if (confirm("정말로 모든 진행 상황을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
-                    localStorage.removeItem('playerStats');
+                if (window.confirm('정말로 모든 진행 상황을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                    localStorage.removeItem('rpgGameState');
                     setPlayerStats(getInitialPlayerStats());
                     setView(View.TOWN);
                 }
             };
             
-            const startDungeon = (dungeon) => {
-                if (!playerStats) return;
-
-                let finalDungeon = { ...dungeon };
-                // 플레이어 레벨이 10 미만이면 던전 가디언(id: 4)을 오크(id: 3)로 교체합니다.
-                if (playerStats.level < 10) {
-                    finalDungeon.monsters = dungeon.monsters.map(monsterId => monsterId === 4 ? 3 : monsterId);
+            const endDungeon = (cleared) => {
+                if (cleared) {
+                    alert("던전 공략에 성공했습니다!");
+                } else {
+                     alert("던전 공략에 실패했습니다. 마을로 돌아갑니다.");
                 }
-                
-                setSelectedDungeon(finalDungeon);
-                setView(View.DUNGEON_BATTLE);
+                setCurrentDungeon(null);
+                setView(View.TOWN);
             };
 
             const renderView = () => {
-                if (!playerStats) return <div>게임 불러오는 중...</div>;
-
                 switch (view) {
-                    case View.TOWN:
-                        return <TownView playerStats={playerStats} setView={setView} />;
                     case View.PLAYER:
-                        return <PlayerStatsView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                        return <PlayerStatsView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} resetGame={resetGame} />;
                     case View.SHOP:
                         return <ShopView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.BATTLE:
                         return <BattleView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.CLASS_SELECTION:
-                         return <ClassSelectionView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                        return <ClassSelectionView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.DUNGEON:
-                        return <DungeonSelectionView setView={setView} startDungeon={startDungeon} />;
+                        return <DungeonView setView={setView} setCurrentDungeon={(d) => { setCurrentDungeon(d); setView(View.DUNGEON_BATTLE); }} />;
                     case View.DUNGEON_BATTLE:
-                        return <DungeonBattleView dungeon={selectedDungeon} playerStats={playerStats} setPlayerStats={setPlayerStats} endDungeon={() => { setView(View.TOWN); }} />;
+                         return <DungeonBattleView dungeon={currentDungeon} playerStats={playerStats} setPlayerStats={setPlayerStats} endDungeon={endDungeon} />;
                     case View.BLACKSMITH:
                         return <BlacksmithView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.QUEST_BOARD:
@@ -2472,22 +2484,17 @@
                     case View.TROPHY_ROAD:
                         return <TrophyRoadView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.PETS:
-                         return <PetsView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                        return <PetManagementView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                    case View.TOWN:
                     default:
                         return <TownView playerStats={playerStats} setView={setView} />;
                 }
             };
 
-            return (
-                <>
-                    {renderView()}
-                    <button onClick={resetGame} style={{ marginTop: '20px', backgroundColor: '#555' }}>게임 초기화</button>
-                </>
-            );
+            return <Fragment>{renderView()}</Fragment>;
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
