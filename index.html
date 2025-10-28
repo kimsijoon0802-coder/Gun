@@ -664,7 +664,6 @@
             { id: 1, title: '초보 사냥꾼', description: '슬라임을 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 5, rewards: { xp: 50, gold: 100 } },
             { id: 2, title: '가죽 수집', description: '가죽을 10개 모으세요.', type: 'COLLECT_ITEM', targetId: 7, targetQuantity: 10, rewards: { xp: 30, gold: 150 } },
             { id: 3, title: '첫 번째 제작', description: '강철 검을 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 1, rewards: { xp: 100, gold: 200, items: [{ itemId: 12, quantity: 2 }] } },
-            // 신규 퀘스트
             { id: 4, title: '슬라임 박멸', description: '슬라임을 50마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 50, rewards: { xp: 200, gold: 500 } },
             { id: 5, title: '고블린 소탕 작전', description: '고블린을 30마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 2, targetQuantity: 30, rewards: { xp: 300, gold: 700 } },
             { id: 6, title: '오크와의 전면전', description: '오크를 20마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 3, targetQuantity: 20, rewards: { xp: 500, gold: 1000 } },
@@ -685,6 +684,17 @@
             { id: 21, title: '움직이는 석상', description: '고대 골렘을 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 1, rewards: { xp: 6000, gold: 12000 } },
             { id: 22, title: '공허의 눈', description: '심연의 감시자를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 203, targetQuantity: 1, rewards: { xp: 7000, gold: 14000 } },
             { id: 23, title: '리치 헌터', description: '리치를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 103, targetQuantity: 5, rewards: { xp: 2000, gold: 4000 } },
+            // --- 추가된 퀘스트 ---
+            { id: 24, title: '가디언 슬레이어', description: '던전 가디언을 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 4, targetQuantity: 10, rewards: { xp: 1500, gold: 3000, items: [{ itemId: 12, quantity: 5 }] } },
+            { id: 25, title: '드래곤 헌터', description: '새끼용을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 104, targetQuantity: 3, rewards: { xp: 10000, gold: 25000, items: [{ itemId: 41, quantity: 1 }] } },
+            { id: 26, title: '심연의 정복자', description: '지옥의 군주를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 5, rewards: { xp: 50000, gold: 100000, items: [{ itemId: 71, quantity: 1 }] } },
+            { id: 27, title: '마력의 대가', description: '마력의 돌을 100개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 100, rewards: { xp: 3000, gold: 5000 } },
+            { id: 28, title: '전설의 갑옷', description: '용비늘 갑옷을 1개 획득하세요.', type: 'COLLECT_ITEM', targetId: 47, targetQuantity: 1, rewards: { xp: 8000, gold: 15000 } },
+            { id: 29, title: '동굴 탐험가', description: '고블린 동굴을 5번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 5, rewards: { xp: 2500, gold: 5000 } },
+            { id: 30, title: '용의 둥지 전문가', description: '용의 둥지를 3번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 3, rewards: { xp: 20000, gold: 50000, items: [{ itemId: 59, quantity: 1 }] } },
+            { id: 31, title: '오우거 학살자', description: '오우거를 25마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 25, rewards: { xp: 7500, gold: 12000 } },
+            { id: 32, title: '전설의 무기 수집가', description: '엑스칼리버를 획득하세요.', type: 'COLLECT_ITEM', targetId: 38, targetQuantity: 1, rewards: { xp: 15000, gold: 30000 } },
+            { id: 33, title: '골렘 파괴자', description: '고대 골렘을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 3, rewards: { xp: 45000, gold: 80000 } },
         ];
 
         const townLevels = [
@@ -1211,12 +1221,12 @@
 
                             let newProgress = quest.currentProgress;
                             if (quest.type === 'DEFEAT_MONSTER' && quest.targetId === monster.id) {
-                                newProgress += 1;
+                                newProgress = (newProgress || 0) + 1;
                             }
                             if (quest.type === 'COLLECT_ITEM') {
                                 const relevantDrop = itemDrops.find(d => d.id === quest.targetId);
                                 if (relevantDrop) {
-                                     newProgress += relevantDrop.quantity;
+                                     newProgress = (newProgress || 0) + relevantDrop.quantity;
                                 }
                             }
                             return { ...quest, currentProgress: Math.min(quest.targetQuantity, newProgress) };
@@ -1224,7 +1234,7 @@
 
                         return {
                             ...prev,
-                            hp: prev.hp, // HP no longer fully heals after battle
+                            hp: newMaxHp,
                             xp: newXp,
                             level: newLevel,
                             maxHp: newMaxHp,
@@ -1644,12 +1654,12 @@
                         if (quest.isCompleted) return quest;
                         let newProgress = quest.currentProgress;
                         if (quest.type === 'DEFEAT_MONSTER' && quest.targetId === monster.id) {
-                            newProgress += 1;
+                            newProgress = (newProgress || 0) + 1;
                         }
                         if (quest.type === 'COLLECT_ITEM') {
                             const relevantDrop = itemDrops.find(d => d.id === quest.targetId);
                             if (relevantDrop) {
-                                newProgress += relevantDrop.quantity;
+                                newProgress = (newProgress || 0) + relevantDrop.quantity;
                             }
                         }
                         return { ...quest, currentProgress: Math.min(quest.targetQuantity, newProgress) };
@@ -1679,12 +1689,12 @@
                         
                         const updatedQuests = prev.activeQuests.map(quest => {
                            if (!quest.isCompleted && quest.type === 'CLEAR_DUNGEON' && quest.targetId === dungeon.id) {
-                               return { ...quest, currentProgress: quest.currentProgress + 1 };
+                               return { ...quest, currentProgress: (quest.currentProgress || 0) + 1 };
                            }
                            return quest;
                         });
 
-                        return { ...prev, xp: finalXp, gold: finalGold, inventory: newInventory, activeQuests: updatedQuests };
+                        return { ...prev, xp: finalXp, gold: finalGold, inventory: newInventory, activeQuests: updatedQuests, hp: prev.maxHp };
                     });
                     setTimeout(() => endDungeon(true), 2000);
                 }
@@ -2144,15 +2154,8 @@
                  alert(`${quest.title} 퀘스트 완료!`);
             };
             
-            const getItemCount = (itemId) => {
-                return playerStats.inventory.find(i => i.id === itemId)?.quantity || 0;
-            };
-
             const checkCompletion = (quest) => {
-                if(quest.type === 'COLLECT_ITEM') {
-                    return getItemCount(quest.targetId) >= quest.targetQuantity;
-                }
-                return quest.currentProgress >= quest.targetQuantity;
+                return (quest.currentProgress || 0) >= quest.targetQuantity;
             };
 
 
@@ -2164,16 +2167,16 @@
                         <h3>진행 중인 퀘스트</h3>
                         {playerStats.activeQuests.length > 0 ? playerStats.activeQuests.map(quest => {
                             const isComplete = checkCompletion(quest);
-                            const progress = quest.type === 'COLLECT_ITEM' ? getItemCount(quest.targetId) : quest.currentProgress;
+                            const progress = quest.currentProgress || 0;
                             return (
                                 <div key={quest.id} className={`card quest-card ${isComplete ? 'completed' : ''}`}>
                                     <div>
                                         <h4>{quest.title}</h4>
                                         <p>{quest.description}</p>
                                         <div className="quest-progress-bar-container">
-                                            <div className="quest-progress-bar-fill" style={{width: `${(progress / quest.targetQuantity) * 100}%`}}></div>
+                                            <div className="quest-progress-bar-fill" style={{width: `${(Math.min(progress, quest.targetQuantity) / quest.targetQuantity) * 100}%`}}></div>
                                         </div>
-                                        <small>{progress} / {quest.targetQuantity}</small>
+                                        <small>{Math.min(progress, quest.targetQuantity)} / {quest.targetQuantity}</small>
                                     </div>
                                     <button onClick={() => completeQuest(quest)} disabled={!isComplete}>완료</button>
                                 </div>
