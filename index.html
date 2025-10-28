@@ -660,41 +660,39 @@
         ];
 
         const allQuests = [
-            // 기존 퀘스트
-            { id: 1, title: '초보 사냥꾼', description: '슬라임을 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 5, rewards: { xp: 50, gold: 100 } },
-            { id: 2, title: '가죽 수집', description: '가죽을 10개 모으세요.', type: 'COLLECT_ITEM', targetId: 7, targetQuantity: 10, rewards: { xp: 30, gold: 150 } },
-            { id: 3, title: '첫 번째 제작', description: '강철 검을 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 1, rewards: { xp: 100, gold: 200, items: [{ itemId: 12, quantity: 2 }] } },
-            { id: 4, title: '슬라임 박멸', description: '슬라임을 50마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 50, rewards: { xp: 200, gold: 500 } },
-            { id: 5, title: '고블린 소탕 작전', description: '고블린을 30마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 2, targetQuantity: 30, rewards: { xp: 300, gold: 700 } },
-            { id: 6, title: '오크와의 전면전', description: '오크를 20마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 3, targetQuantity: 20, rewards: { xp: 500, gold: 1000 } },
-            { id: 7, title: '언데드 정화', description: '해골 기사를 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 101, targetQuantity: 10, rewards: { xp: 800, gold: 1500 } },
-            { id: 8, title: '거인의 위협', description: '오우거를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 5, rewards: { xp: 1000, gold: 2000 } },
-            { id: 9, title: '광물 전문가', description: '철광석을 30개 모으세요.', type: 'COLLECT_ITEM', targetId: 6, targetQuantity: 30, rewards: { xp: 150, gold: 300 } },
-            { id: 10, title: '마법의 근원', description: '마력의 돌을 20개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 20, rewards: { xp: 400, gold: 800, items: [{ itemId: 51, quantity: 2 }] } },
-            { id: 11, title: '대장장이의 길', description: '강철 검을 5개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 5, rewards: { xp: 500, gold: 1000 } },
-            { id: 12, title: '견고한 방어', description: '플레이트 아머를 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 45, targetQuantity: 1, rewards: { xp: 1200, gold: 2500 } },
-            { id: 13, title: '고블린 동굴 정복', description: '고블린 동굴을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 1, rewards: { xp: 1000, gold: 2000 } },
-            { id: 14, title: '오크 전초기지 파괴', description: '오크의 전초기지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 2, targetQuantity: 1, rewards: { xp: 3000, gold: 6000 } },
-            { id: 15, title: '지하묘지의 안식', description: '잊혀진 지하묘지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 3, targetQuantity: 1, rewards: { xp: 6000, gold: 12000, items: [{ itemId: 33, quantity: 1 }] } },
-            { id: 16, title: '드래곤 슬레이어의 자격', description: '용의 둥지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 1, rewards: { xp: 15000, gold: 35000, items: [{ itemId: 40, quantity: 1 }] } },
-            { id: 17, title: '심연으로의 첫걸음', description: '불타는 심연을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 5, targetQuantity: 1, rewards: { xp: 60000, gold: 120000, items: [{ itemId: 12, quantity: 50 }] } },
-            { id: 18, title: '고대의 파수꾼', description: '고대 골렘의 무덤을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 6, targetQuantity: 1, rewards: { xp: 70000, gold: 140000, items: [{ itemId: 12, quantity: 70 }] } },
-            { id: 19, title: '혼돈의 지배자', description: '혼돈의 차원을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 7, targetQuantity: 1, rewards: { xp: 90000, gold: 170000, items: [{ itemId: 12, quantity: 100 }] } },
-            { id: 20, title: '지옥의 지배자', description: '지옥의 군주를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 1, rewards: { xp: 5000, gold: 10000 } },
-            { id: 21, title: '움직이는 석상', description: '고대 골렘을 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 1, rewards: { xp: 6000, gold: 12000 } },
-            { id: 22, title: '공허의 눈', description: '심연의 감시자를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 203, targetQuantity: 1, rewards: { xp: 7000, gold: 14000 } },
-            { id: 23, title: '리치 헌터', description: '리치를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 103, targetQuantity: 5, rewards: { xp: 2000, gold: 4000 } },
-            // --- 추가된 퀘스트 ---
-            { id: 24, title: '가디언 슬레이어', description: '던전 가디언을 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 4, targetQuantity: 10, rewards: { xp: 1500, gold: 3000, items: [{ itemId: 12, quantity: 5 }] } },
-            { id: 25, title: '드래곤 헌터', description: '새끼용을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 104, targetQuantity: 3, rewards: { xp: 10000, gold: 25000, items: [{ itemId: 41, quantity: 1 }] } },
-            { id: 26, title: '심연의 정복자', description: '지옥의 군주를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 5, rewards: { xp: 50000, gold: 100000, items: [{ itemId: 71, quantity: 1 }] } },
-            { id: 27, title: '마력의 대가', description: '마력의 돌을 100개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 100, rewards: { xp: 3000, gold: 5000 } },
-            { id: 28, title: '전설의 갑옷', description: '용비늘 갑옷을 1개 획득하세요.', type: 'COLLECT_ITEM', targetId: 47, targetQuantity: 1, rewards: { xp: 8000, gold: 15000 } },
-            { id: 29, title: '동굴 탐험가', description: '고블린 동굴을 5번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 5, rewards: { xp: 2500, gold: 5000 } },
-            { id: 30, title: '용의 둥지 전문가', description: '용의 둥지를 3번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 3, rewards: { xp: 20000, gold: 50000, items: [{ itemId: 59, quantity: 1 }] } },
-            { id: 31, title: '오우거 학살자', description: '오우거를 25마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 25, rewards: { xp: 7500, gold: 12000 } },
-            { id: 32, title: '전설의 무기 수집가', description: '엑스칼리버를 획득하세요.', type: 'COLLECT_ITEM', targetId: 38, targetQuantity: 1, rewards: { xp: 15000, gold: 30000 } },
-            { id: 33, title: '골렘 파괴자', description: '고대 골렘을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 3, rewards: { xp: 45000, gold: 80000 } },
+            { id: 1, title: '초보 사냥꾼', description: '슬라임을 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 5, rewards: { xp: 50, gold: 100 }, requiredLevel: 1 },
+            { id: 2, title: '가죽 수집', description: '가죽을 10개 모으세요.', type: 'COLLECT_ITEM', targetId: 7, targetQuantity: 10, rewards: { xp: 30, gold: 150 }, requiredLevel: 1 },
+            { id: 3, title: '첫 번째 제작', description: '강철 검을 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 1, rewards: { xp: 100, gold: 200, items: [{ itemId: 12, quantity: 2 }] }, requiredLevel: 2 },
+            { id: 4, title: '슬라임 박멸', description: '슬라임을 50마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 1, targetQuantity: 50, rewards: { xp: 200, gold: 500 }, requiredLevel: 3 },
+            { id: 5, title: '고블린 소탕 작전', description: '고블린을 30마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 2, targetQuantity: 30, rewards: { xp: 300, gold: 700 }, requiredLevel: 5 },
+            { id: 6, title: '오크와의 전면전', description: '오크를 20마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 3, targetQuantity: 20, rewards: { xp: 500, gold: 1000 }, requiredLevel: 8 },
+            { id: 7, title: '언데드 정화', description: '해골 기사를 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 101, targetQuantity: 10, rewards: { xp: 800, gold: 1500 }, requiredLevel: 10 },
+            { id: 8, title: '거인의 위협', description: '오우거를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 5, rewards: { xp: 1000, gold: 2000 }, requiredLevel: 12 },
+            { id: 9, title: '광물 전문가', description: '철광석을 30개 모으세요.', type: 'COLLECT_ITEM', targetId: 6, targetQuantity: 30, rewards: { xp: 150, gold: 300 }, requiredLevel: 4 },
+            { id: 10, title: '마법의 근원', description: '마력의 돌을 20개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 20, rewards: { xp: 400, gold: 800, items: [{ itemId: 51, quantity: 2 }] }, requiredLevel: 10 },
+            { id: 11, title: '대장장이의 길', description: '강철 검을 5개 제작하세요.', type: 'CRAFT_ITEM', targetId: 3, targetQuantity: 5, rewards: { xp: 500, gold: 1000 }, requiredLevel: 8 },
+            { id: 12, title: '견고한 방어', description: '플레이트 아머를 1개 제작하세요.', type: 'CRAFT_ITEM', targetId: 45, targetQuantity: 1, rewards: { xp: 1200, gold: 2500 }, requiredLevel: 15 },
+            { id: 13, title: '고블린 동굴 정복', description: '고블린 동굴을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 1, rewards: { xp: 1000, gold: 2000 }, requiredLevel: 7 },
+            { id: 14, title: '오크 전초기지 파괴', description: '오크의 전초기지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 2, targetQuantity: 1, rewards: { xp: 3000, gold: 6000 }, requiredLevel: 12 },
+            { id: 15, title: '지하묘지의 안식', description: '잊혀진 지하묘지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 3, targetQuantity: 1, rewards: { xp: 6000, gold: 12000, items: [{ itemId: 33, quantity: 1 }] }, requiredLevel: 18 },
+            { id: 16, title: '드래곤 슬레이어의 자격', description: '용의 둥지를 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 1, rewards: { xp: 15000, gold: 35000, items: [{ itemId: 40, quantity: 1 }] }, requiredLevel: 25 },
+            { id: 17, title: '심연으로의 첫걸음', description: '불타는 심연을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 5, targetQuantity: 1, rewards: { xp: 60000, gold: 120000, items: [{ itemId: 12, quantity: 50 }] }, requiredLevel: 30 },
+            { id: 18, title: '고대의 파수꾼', description: '고대 골렘의 무덤을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 6, targetQuantity: 1, rewards: { xp: 70000, gold: 140000, items: [{ itemId: 12, quantity: 70 }] }, requiredLevel: 35 },
+            { id: 19, title: '혼돈의 지배자', description: '혼돈의 차원을 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 7, targetQuantity: 1, rewards: { xp: 90000, gold: 170000, items: [{ itemId: 12, quantity: 100 }] }, requiredLevel: 40 },
+            { id: 20, title: '지옥의 지배자', description: '지옥의 군주를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 1, rewards: { xp: 5000, gold: 10000 }, requiredLevel: 32 },
+            { id: 21, title: '움직이는 석상', description: '고대 골렘을 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 1, rewards: { xp: 6000, gold: 12000 }, requiredLevel: 37 },
+            { id: 22, title: '공허의 눈', description: '심연의 감시자를 1마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 203, targetQuantity: 1, rewards: { xp: 7000, gold: 14000 }, requiredLevel: 42 },
+            { id: 23, title: '리치 헌터', description: '리치를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 103, targetQuantity: 5, rewards: { xp: 2000, gold: 4000 }, requiredLevel: 22 },
+            { id: 24, title: '가디언 슬레이어', description: '던전 가디언을 10마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 4, targetQuantity: 10, rewards: { xp: 1500, gold: 3000, items: [{ itemId: 12, quantity: 5 }] }, requiredLevel: 14 },
+            { id: 25, title: '드래곤 헌터', description: '새끼용을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 104, targetQuantity: 3, rewards: { xp: 10000, gold: 25000, items: [{ itemId: 41, quantity: 1 }] }, requiredLevel: 28 },
+            { id: 26, title: '심연의 정복자', description: '지옥의 군주를 5마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 201, targetQuantity: 5, rewards: { xp: 50000, gold: 100000, items: [{ itemId: 71, quantity: 1 }] }, requiredLevel: 45 },
+            { id: 27, title: '마력의 대가', description: '마력의 돌을 100개 모으세요.', type: 'COLLECT_ITEM', targetId: 12, targetQuantity: 100, rewards: { xp: 3000, gold: 5000 }, requiredLevel: 20 },
+            { id: 28, title: '전설의 갑옷', description: '용비늘 갑옷을 1개 획득하세요.', type: 'COLLECT_ITEM', targetId: 47, targetQuantity: 1, rewards: { xp: 8000, gold: 15000 }, requiredLevel: 26 },
+            { id: 29, title: '동굴 탐험가', description: '고블린 동굴을 5번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 1, targetQuantity: 5, rewards: { xp: 2500, gold: 5000 }, requiredLevel: 9 },
+            { id: 30, title: '용의 둥지 전문가', description: '용의 둥지를 3번 클리어하세요.', type: 'CLEAR_DUNGEON', targetId: 4, targetQuantity: 3, rewards: { xp: 20000, gold: 50000, items: [{ itemId: 59, quantity: 1 }] }, requiredLevel: 27 },
+            { id: 31, title: '오우거 학살자', description: '오우거를 25마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 102, targetQuantity: 25, rewards: { xp: 7500, gold: 12000 }, requiredLevel: 16 },
+            { id: 32, title: '전설의 무기 수집가', description: '엑스칼리버를 획득하세요.', type: 'COLLECT_ITEM', targetId: 38, targetQuantity: 1, rewards: { xp: 15000, gold: 30000 }, requiredLevel: 30 },
+            { id: 33, title: '골렘 파괴자', description: '고대 골렘을 3마리 처치하세요.', type: 'DEFEAT_MONSTER', targetId: 202, targetQuantity: 3, rewards: { xp: 45000, gold: 80000 }, requiredLevel: 40 },
         ];
 
         const townLevels = [
@@ -742,6 +740,7 @@
             activeQuests: [],
             pets: [],
             activePetId: null,
+            completedQuestIds: [],
         });
 
         // --- UTILITY FUNCTIONS ---
@@ -1218,18 +1217,11 @@
 
                          const updatedQuests = prev.activeQuests.map(quest => {
                             if (quest.isCompleted) return quest;
-
-                            let newProgress = quest.currentProgress;
+                            let newProgress = quest.currentProgress || 0;
                             if (quest.type === 'DEFEAT_MONSTER' && quest.targetId === monster.id) {
-                                newProgress = (newProgress || 0) + 1;
+                                newProgress += 1;
                             }
-                            if (quest.type === 'COLLECT_ITEM') {
-                                const relevantDrop = itemDrops.find(d => d.id === quest.targetId);
-                                if (relevantDrop) {
-                                     newProgress = (newProgress || 0) + relevantDrop.quantity;
-                                }
-                            }
-                            return { ...quest, currentProgress: Math.min(quest.targetQuantity, newProgress) };
+                            return { ...quest, currentProgress: newProgress };
                         });
 
                         return {
@@ -1652,17 +1644,11 @@
                     
                      const updatedQuests = prev.activeQuests.map(quest => {
                         if (quest.isCompleted) return quest;
-                        let newProgress = quest.currentProgress;
+                        let newProgress = quest.currentProgress || 0;
                         if (quest.type === 'DEFEAT_MONSTER' && quest.targetId === monster.id) {
-                            newProgress = (newProgress || 0) + 1;
+                            newProgress += 1;
                         }
-                        if (quest.type === 'COLLECT_ITEM') {
-                            const relevantDrop = itemDrops.find(d => d.id === quest.targetId);
-                            if (relevantDrop) {
-                                newProgress = (newProgress || 0) + relevantDrop.quantity;
-                            }
-                        }
-                        return { ...quest, currentProgress: Math.min(quest.targetQuantity, newProgress) };
+                        return { ...quest, currentProgress: newProgress };
                     });
 
                     return { ...prev, xp: newXp, level: newLevel, maxHp: newMaxHp, attack: newAttack, defense: newDefense, xpToNextLevel: newXpToNextLevel, gold: prev.gold + goldEarned, inventory: newInventory, townXp: prev.townXp + townXpGained, activeQuests: updatedQuests };
@@ -2097,8 +2083,16 @@
 
             useEffect(() => {
                 const acceptedQuestIds = playerStats.activeQuests.map(q => q.id);
-                const potentialQuests = allQuests.filter(q => !acceptedQuestIds.includes(q.id) && (q.id <= 3 || playerStats.level >= (q.id-3) * 2));
-                setAvailableQuests(potentialQuests.slice(0, 5)); // Show up to 5 available quests
+                const completedIds = playerStats.completedQuestIds || [];
+                const allTakenIds = new Set([...acceptedQuestIds, ...completedIds]);
+
+                // Show quests that are available now or will be available soon (within 2 levels)
+                const potentialQuests = allQuests.filter(q => 
+                    !allTakenIds.has(q.id) && 
+                    (playerStats.level + 2) >= (q.requiredLevel || 1)
+                ).sort((a, b) => (a.requiredLevel || 1) - (b.requiredLevel || 1));
+
+                setAvailableQuests(potentialQuests.slice(0, 10));
             }, [playerStats]);
 
             const acceptQuest = (quest) => {
@@ -2141,6 +2135,7 @@
                     return {
                         ...prev,
                         activeQuests: newQuests,
+                        completedQuestIds: [...(prev.completedQuestIds || []), quest.id],
                         gold: newGold,
                         xp: newXp,
                         inventory: newInventory,
@@ -2154,10 +2149,17 @@
                  alert(`${quest.title} 퀘스트 완료!`);
             };
             
-            const checkCompletion = (quest) => {
-                return (quest.currentProgress || 0) >= quest.targetQuantity;
+            const getQuestProgress = (quest) => {
+                if (quest.type === 'COLLECT_ITEM' || quest.type === 'CRAFT_ITEM') {
+                    const itemInInventory = playerStats.inventory.find(i => i.id === quest.targetId);
+                    return itemInInventory ? itemInInventory.quantity : 0;
+                }
+                return quest.currentProgress || 0;
             };
 
+            const checkCompletion = (quest) => {
+                return getQuestProgress(quest) >= quest.targetQuantity;
+            };
 
             return (
                 <div className="card">
@@ -2166,8 +2168,8 @@
                     <div className="quest-section">
                         <h3>진행 중인 퀘스트</h3>
                         {playerStats.activeQuests.length > 0 ? playerStats.activeQuests.map(quest => {
+                            const progress = getQuestProgress(quest);
                             const isComplete = checkCompletion(quest);
-                            const progress = quest.currentProgress || 0;
                             return (
                                 <div key={quest.id} className={`card quest-card ${isComplete ? 'completed' : ''}`}>
                                     <div>
@@ -2185,18 +2187,23 @@
                     </div>
                      <div className="quest-section">
                         <h3>새로운 퀘스트</h3>
-                        {availableQuests.map(quest => (
-                            <div key={quest.id} className="card quest-card">
-                                 <div>
-                                    <h4>{quest.title}</h4>
-                                    <p>{quest.description}</p>
+                        {availableQuests.length > 0 ? availableQuests.map(quest => {
+                            const canAccept = playerStats.level >= (quest.requiredLevel || 1);
+                            return (
+                                <div key={quest.id} className="card quest-card" style={{ opacity: canAccept ? 1 : 0.6 }}>
+                                     <div>
+                                        <h4>{quest.title} {!canAccept && `(Lv. ${quest.requiredLevel} 필요)`}</h4>
+                                        <p>{quest.description}</p>
+                                    </div>
+                                    <button onClick={() => acceptQuest(quest)} disabled={!canAccept}>
+                                        {canAccept ? '수락' : '레벨 부족'}
+                                    </button>
                                 </div>
-                                <button onClick={() => acceptQuest(quest)}>수락</button>
-                            </div>
-                        ))}
+                            );
+                        }) : <p>수락할 수 있는 새로운 퀘스트가 없습니다. 레벨을 올리거나 다른 퀘스트를 완료하세요.</p>}
                     </div>
                 </div>
-            )
+            );
         };
         
         const GachaShrineView = ({ playerStats, setPlayerStats, setView }) => {
@@ -2409,7 +2416,7 @@
                         <div className="pet-details-panel card">
                             {selectedPet ? (
                                 <>
-                                    <h3>{selectedPet.name} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
+                                    <h3>{selectedPet.name} <span className={ItemGradeInfo[pet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
                                     <p>공격력 보너스: +{selectedPet.attackBonus}</p>
                                     <p>방어력 보너스: +{selectedPet.defenseBonus}</p>
                                     <h4>스킬: {selectedPet.skillName}</h4>
