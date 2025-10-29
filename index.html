@@ -308,7 +308,7 @@
             100% { transform: translateY(-50px); opacity: 0; }
         }
 
-        /* Modal for Battle Inventory */
+        /* Modal */
         .modal-backdrop {
             position: fixed;
             top: 0;
@@ -326,6 +326,22 @@
             max-width: 500px;
         }
 
+        /* Difficulty Selector Modal */
+        .difficulty-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .difficulty-buttons button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+        }
+        .difficulty-buttons button:nth-child(1) { background-color: #4CAF50; } /* Easy */
+        .difficulty-buttons button:nth-child(2) { background-color: #FFC107; } /* Medium */
+        .difficulty-buttons button:nth-child(3) { background-color: #F44336; } /* Hard */
+
+
         /* Class Selection */
         .class-selection-grid {
             display: grid;
@@ -342,6 +358,7 @@
             padding: 15px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
+            margin-bottom: 15px;
         }
 
         /* Blacksmith */
@@ -455,14 +472,16 @@
     </style>
     <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
     <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18",
-            "react-dom/client": "https://esm.sh/react-dom@18/client",
-            "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime"
-        }
-    }
-    </script>
+{
+  "imports": {
+    "react": "https://esm.sh/react@18",
+    "react-dom/client": "https://esm.sh/react-dom@18/client",
+    "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
@@ -657,6 +676,9 @@
             { id: 5, name: '불타는 심연', description: '지옥의 불길이 타오르는 끔찍한 공간입니다. 지옥의 군주가 지배하고 있습니다.', difficulty: 7, stages: 15, monsters: [103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 201], rewards: { xp: 50000, gold: 100000, items: [{ itemId: 12, quantity: 50 }] } },
             { id: 6, name: '고대 골렘의 무덤', description: '잠들어 있는 거인을 깨우지 마십시오. 엄청난 방어력을 가진 고대 골렘이 버티고 있습니다.', difficulty: 8, stages: 15, monsters: [4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 4, 102, 202], rewards: { xp: 60000, gold: 120000, items: [{ itemId: 12, quantity: 70 }] } },
             { id: 7, name: '혼돈의 차원', description: '시공간이 뒤틀린 미지의 공간. 예측할 수 없는 심연의 감시자가 당신을 노립니다.', difficulty: 9, stages: 15, monsters: [104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 104, 103, 203], rewards: { xp: 80000, gold: 150000, items: [{ itemId: 12, quantity: 100 }] } },
+            { id: 8, name: '신들의 무덤', description: '고대 신들이 잠들어 있는 곳. 신화적인 존재들이 당신의 자격을 시험합니다.', difficulty: 10, stages: 20, monsters: [201, 202, 201, 202, 201, 202, 201, 202, 201, 202, 203, 201, 203, 202, 203, 201, 203, 202, 203, 203], rewards: { xp: 200000, gold: 500000, items: [{ itemId: 72, quantity: 1 }] } },
+            { id: 9, name: '태초의 균열', description: '세계가 시작된 혼돈의 균열. 상상조차 할 수 없는 힘이 도사리고 있습니다.', difficulty: 11, stages: 20, monsters: [202, 203, 202, 203, 202, 203, 202, 203, 202, 203, 201, 202, 201, 203, 201, 202, 201, 203, 201, 201], rewards: { xp: 350000, gold: 800000, items: [{ itemId: 73, quantity: 1 }] } },
+            { id: 10, name: '차원 너머의 심연', description: '우주의 끝, 모든 법칙이 무너지는 곳. 형용할 수 없는 공포가 도사리고 있습니다.', difficulty: 12, stages: 25, monsters: [201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 203], rewards: { xp: 500000, gold: 1200000, items: [{ itemId: 75, quantity: 1 }] } },
         ];
 
         const allQuests = [
@@ -754,6 +776,16 @@
             return item.name;
         };
 
+        const calculateDamage = (attack, defense) => {
+            // Defense provides percentage-based damage reduction
+            // Formula: damageReduction = defense / (defense + K) where K is a constant. Let's use 100.
+            // e.g., 50 def = 33% reduction, 100 def = 50% reduction, 200 def = 66% reduction
+            const damageReduction = defense / (defense + 100);
+            const finalDamage = attack * (1 - damageReduction);
+            return Math.max(1, Math.round(finalDamage));
+        };
+
+
         // --- COMPONENTS ---
 
         const StatBar = ({ value, maxValue, color, label }) => (
@@ -830,7 +862,7 @@
             );
         };
 
-        const TownView = ({ playerStats, setView }) => (
+        const TownView = ({ playerStats, setView, setShowDifficultyModal }) => (
             <div className="card town-layout">
                 <h2>마을</h2>
                 <p>환장RPG에 오신 것을 환영합니다! 무엇을 하시겠습니까?</p>
@@ -852,7 +884,7 @@
                     <button onClick={() => setView(View.PETS)}>반려동물</button>
                 </div>
                 <div className="town-main-actions">
-                    <button onClick={() => setView(View.BATTLE)}>전투 시작</button>
+                    <button onClick={() => setShowDifficultyModal(true)}>전투 시작</button>
                     <button onClick={() => setView(View.DUNGEON)}>던전</button>
                 </div>
             </div>
@@ -1077,7 +1109,7 @@
             );
         };
 
-        const BattleView = ({ playerStats, setPlayerStats, setView }) => {
+        const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             const [monster, setMonster] = useState(null);
             const [battleLog, setBattleLog] = useState([]);
             const [isPlayerTurn, setIsPlayerTurn] = useState(true);
@@ -1126,43 +1158,55 @@
 
             useEffect(() => {
                 const getBattleMonster = () => {
-                    const weapon = playerStats.equipment.weapon;
-                    const threatLevel = (weapon?.damage || 0) + (weapon?.price / 200 || 0) + playerStats.level;
-                    
+                    const level = playerStats.level;
                     let possibleMonsters;
 
-                    if (threatLevel < 25) { // Early game
-                        possibleMonsters = allMonsters.filter(m => [1, 2].includes(m.id)); // Slime, Goblin
-                    } else if (threatLevel < 50) { // Mid game
-                        possibleMonsters = allMonsters.filter(m => [2, 3].includes(m.id)); // Goblin, Orc
-                    } else if (threatLevel < 80) { // Late mid game
-                        possibleMonsters = allMonsters.filter(m => [3, 101].includes(m.id)); // Orc, Skeleton Knight
-                    } else if (threatLevel < 120) { // High level
-                        possibleMonsters = allMonsters.filter(m => [101, 102, 4].includes(m.id)); // Skeleton Knight, Ogre, Dungeon Guardian
-                    } else { // End game
-                        possibleMonsters = allMonsters.filter(m => [102, 103, 4].includes(m.id)); // Ogre, Lich, Dungeon Guardian
+                    if (level < 5) {
+                        possibleMonsters = allMonsters.filter(m => [1, 2].includes(m.id));
+                    } else if (level < 10) {
+                        possibleMonsters = allMonsters.filter(m => [2, 3].includes(m.id));
+                    } else if (level < 15) {
+                        possibleMonsters = allMonsters.filter(m => [3, 101, 4].includes(m.id));
+                    } else if (level < 25) {
+                        possibleMonsters = allMonsters.filter(m => [101, 102, 4].includes(m.id));
+                    } else {
+                        possibleMonsters = allMonsters.filter(m => [102, 103, 104].includes(m.id));
                     }
+
+                    const baseMonster = { ...possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)] };
                     
-                    if (!possibleMonsters || possibleMonsters.length === 0) {
-                        possibleMonsters = allMonsters.filter(m => m.id === 1); // fallback
-                    }
-                    
-                    return { ...possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)] };
+                    const scalingFactor = 1 + (level - 1) * 0.15; // 15% stronger per level
+                    const difficultyMultipliers = { Easy: 0.75, Medium: 1.0, Hard: 1.5 };
+                    const difficultyMultiplier = difficultyMultipliers[difficulty] || 1.0;
+                    const finalMultiplier = scalingFactor * difficultyMultiplier;
+
+                    const scaledMonster = {
+                        ...baseMonster,
+                        maxHp: Math.round(baseMonster.maxHp * finalMultiplier),
+                        hp: Math.round(baseMonster.maxHp * finalMultiplier),
+                        attack: Math.round(baseMonster.attack * finalMultiplier),
+                        defense: Math.round(baseMonster.defense * finalMultiplier),
+                        xp: Math.round(baseMonster.xp * finalMultiplier),
+                        gold: Math.round(baseMonster.gold * finalMultiplier),
+                    };
+
+                    return scaledMonster;
                 };
                 
                 if (!monster) {
                     const randomMonster = getBattleMonster();
+                    const difficultyText = { Easy: '쉬움', Medium: '중간', Hard: '어려움' };
                     setMonster(randomMonster);
-                    addLog(`${randomMonster.name}이(가) 나타났다!`, 'system-message');
+                    addLog(`${randomMonster.name} (Lv.${playerStats.level}) 이(가) 나타났다! [${difficultyText[difficulty]}]`, 'system-message');
                 }
-            }, [addLog, monster]);
+            }, [addLog, monster, playerStats.level, difficulty]);
 
             const handleBattleEnd = useCallback((win) => {
                 setIsBattleOver(true);
                 if (win && monster) {
                     const goldEarned = monster.gold;
                     const xpEarned = monster.xp;
-                    const trophiesGained = monster.id > 100 ? (monster.id - 100) * 4 : monster.id * 5; // Simple trophy logic
+                    const trophiesGained = monster.id > 100 ? (monster.id - 100) * 2 : monster.id * 3;
                     addLog(`승리! ${goldEarned} G와 ${xpEarned} XP, 트로피 ${trophiesGained}개를 획득했다!`, 'system-message');
                     
                     const townXpGained = Math.floor(monster.xp / 2);
@@ -1226,7 +1270,7 @@
 
                         return {
                             ...prev,
-                            hp: newMaxHp,
+                            hp: prev.hp, // HP doesn't auto-heal after regular battle
                             xp: newXp,
                             level: newLevel,
                             maxHp: newMaxHp,
@@ -1241,13 +1285,13 @@
                         };
                     });
                 } else {
-                    addLog('패배했다...', 'system-message');
-                    setPlayerStats(prev => ({...prev, hp: 1 })); // Revive with 1 HP
+                    addLog('패배했다... 하지만 HP가 모두 회복되었다!', 'system-message');
+                    setPlayerStats(prev => ({...prev, hp: prev.maxHp }));
                 }
             }, [addLog, monster, setPlayerStats]);
             
             const handleEnemyTurn = useCallback(() => {
-                if (!monster) return;
+                if (!monster || playerStats.hp <= 0) return;
 
                 if (monster.statusEffects?.stun && monster.statusEffects.stun > 0) {
                     addLog(`${monster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
@@ -1259,7 +1303,7 @@
                 setEnemyAttacking(true);
                 setTimeout(() => setEnemyAttacking(false), 400);
 
-                let damage = Math.max(1, monster.attack - totalDefense);
+                let damage = calculateDamage(monster.attack, totalDefense);
                 addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
                 addDamagePopup(String(damage), false, 'player');
                 const newPlayerHp = playerStats.hp - damage;
@@ -1288,27 +1332,29 @@
                     const critChance = (weapon?.critChance || 0.05) + baseCritChance;
                     const isCrit = Math.random() < critChance;
                     const critMultiplier = weapon?.critDamageMultiplier || 1.5;
-                    let damage = totalAttack;
-                    damage = isCrit ? Math.floor(damage * critMultiplier) : damage;
-                    damage = Math.max(1, damage - monster.defense);
+                    let attackPower = totalAttack;
+                    attackPower = isCrit ? Math.floor(attackPower * critMultiplier) : attackPower;
+                    let damage = calculateDamage(attackPower, monster.defense);
                     
                     addLog(`${playerStats.playerName}의 공격! ${monster.name}에게 ${damage}의 피해를 입혔다.${isCrit ? ' (치명타!)' : ''}`, 'player-turn');
                     addDamagePopup(String(damage), isCrit, 'enemy');
                     
+                    let totalDamage = damage;
+
                     const procChance = weapon?.procChance || 0;
                     if (weapon && weapon.procDamage && Math.random() < procChance) {
                         const procDamage = weapon.procDamage;
                          addLog(`${getDisplayName(weapon)}의 특수 효과 발동! ${procDamage}의 추가 피해!`, 'effect-message');
-                         damage += procDamage;
+                         totalDamage += procDamage;
                     }
 
                     if (activePet && Math.random() < activePet.skillProcChance && activePet.skillEffect?.type === 'damage') {
                         const petDamage = activePet.skillEffect.amount || 0;
-                        damage += petDamage;
+                        totalDamage += petDamage;
                         addLog(`${activePet.name}의 스킬 '${activePet.skillName}'! ${petDamage}의 추가 피해!`, 'player-turn', true);
                     }
 
-                    const newMonsterHp = monster.hp - damage;
+                    const newMonsterHp = monster.hp - totalDamage;
                     setMonster({ ...monster, hp: newMonsterHp });
 
                     if (newMonsterHp <= 0) {
@@ -1371,10 +1417,10 @@
                 const playerClass = playerStats.playerClass || 'Adventurer';
                 let damage = 0;
                 let logMessage = '';
+                let isCritUltimate = true;
 
                 if (playerClass === 'Warrior') {
-                    damage = Math.floor(totalAttack * 3);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
                     const stunApplied = Math.random() < 0.5;
                     if (stunApplied) {
                         setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
@@ -1385,21 +1431,18 @@
                 } else if (playerClass === 'Archer') {
                     const weapon = playerStats.equipment.weapon;
                     const critMultiplier = (weapon?.critDamageMultiplier || 1.5) * 2;
-                    damage = Math.floor(totalAttack * critMultiplier);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * critMultiplier), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Archer.name}'! ${monster.name}에게 ${damage}의 치명적인 피해를 입혔다!`;
                 } else if (playerClass === 'Magician') {
-                    damage = Math.floor(totalAttack * 4);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 4), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
                 } else { // Adventurer
-                    damage = Math.floor(totalAttack * 2.5);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
                 }
 
                 addLog(logMessage, 'player-turn');
-                addDamagePopup(String(damage), true, 'enemy');
+                addDamagePopup(String(damage), isCritUltimate, 'enemy');
 
                 const newMonsterHp = monster.hp - damage;
                 setMonster(m => ({ ...m, hp: newMonsterHp }));
@@ -1588,6 +1631,7 @@
                 const newMonster = { ...allMonsters.find(m => m.id === monsterId) };
                 setMonster(newMonster);
                 setIsPlayerTurn(true);
+                setBattleLog([]);
                 addLog(`스테이지 ${currentStage}: ${newMonster.name}이(가) 나타났다!`, 'system-message');
             }, [dungeon, currentStage, addLog]);
 
@@ -1687,17 +1731,17 @@
             }, [monster, currentStage, dungeon, setPlayerStats, addLog, endDungeon]);
 
             const handleBattleFailed = useCallback(() => {
-                addLog('던전 공략 실패...', 'system-message');
-                setPlayerStats(prev => ({ ...prev, hp: 1 }));
+                addLog('던전 공략 실패... HP가 모두 회복되었다!', 'system-message');
+                setPlayerStats(prev => ({ ...prev, hp: prev.maxHp }));
                 setTimeout(() => endDungeon(false), 2000);
             }, [addLog, setPlayerStats, endDungeon]);
 
             const handleEnemyTurn = useCallback(() => {
-                if (!monster) return;
+                if (!monster || playerStats.hp <= 0) return;
                 setEnemyAttacking(true);
                 setTimeout(() => setEnemyAttacking(false), 400);
 
-                let damage = Math.max(1, monster.attack - totalDefense);
+                let damage = calculateDamage(monster.attack, totalDefense);
                 addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
                 addDamagePopup(String(damage), false, 'player');
                 
@@ -1709,15 +1753,16 @@
                     }
                     return { ...prev, hp: newPlayerHp };
                 });
-                setIsPlayerTurn(true);
+                if (playerStats.hp > damage) {
+                    setIsPlayerTurn(true);
+                }
             }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats]);
 
             const handlePlayerAttack = () => {
                 if (!isPlayerTurn || !monster) return;
                 setPlayerAttacking(true);
                 setTimeout(() => setPlayerAttacking(false), 400);
-                setIsPlayerTurn(false);
-
+                
                 const weapon = playerStats.equipment.weapon;
                 const accuracy = weapon?.accuracy || 0.9;
 
@@ -1728,27 +1773,29 @@
                     const critChance = (weapon?.critChance || 0.05) + baseCritChance;
                     const isCrit = Math.random() < critChance;
                     const critMultiplier = weapon?.critDamageMultiplier || 1.5;
-                    let damage = totalAttack;
-                    damage = isCrit ? Math.floor(damage * critMultiplier) : damage;
-                    damage = Math.max(1, damage - monster.defense);
+                    let attackPower = totalAttack;
+                    attackPower = isCrit ? Math.floor(attackPower * critMultiplier) : attackPower;
+                    let damage = calculateDamage(attackPower, monster.defense);
                     
                     addLog(`${playerStats.playerName}의 공격! ${monster.name}에게 ${damage}의 피해를 입혔다.${isCrit ? ' (치명타!)' : ''}`, 'player-turn');
                     addDamagePopup(String(damage), isCrit, 'enemy');
+                    
+                    let totalDamage = damage;
                     
                     const procChance = weapon?.procChance || 0;
                     if (weapon && weapon.procDamage && Math.random() < procChance) {
                         const procDamage = weapon.procDamage;
                          addLog(`${getDisplayName(weapon)}의 특수 효과 발동! ${procDamage}의 추가 피해!`, 'effect-message');
-                         damage += procDamage;
+                         totalDamage += procDamage;
                     }
 
                     if (activePet && Math.random() < activePet.skillProcChance && activePet.skillEffect?.type === 'damage') {
                         const petDamage = activePet.skillEffect.amount || 0;
-                        damage += petDamage;
+                        totalDamage += petDamage;
                         addLog(`${activePet.name}의 스킬 '${activePet.skillName}'! ${petDamage}의 추가 피해!`, 'player-turn', true);
                     }
                     
-                    const newMonsterHp = monster.hp - damage;
+                    const newMonsterHp = monster.hp - totalDamage;
                     if (newMonsterHp <= 0) {
                         setMonster({ ...monster, hp: 0 });
                         handleMonsterDefeated();
@@ -1757,11 +1804,12 @@
                     setMonster({ ...monster, hp: newMonsterHp });
                 }
                 setUltimateCharge(prev => Math.min(5, prev + 1));
+                setIsPlayerTurn(false);
             };
             
             const handleUsePotion = (itemToUse) => {
                 if (!isPlayerTurn || !monster) return;
-                setIsPlayerTurn(false);
+                
                 setShowInventory(false);
 
                 if (itemToUse.effect?.type === 'heal') {
@@ -1794,19 +1842,19 @@
                     setMonster({ ...monster, hp: newMonsterHp });
                 }
                 setUltimateCharge(prev => Math.min(5, prev + 1));
+                setIsPlayerTurn(false);
             };
 
             const handleUseUltimate = () => {
                 if (ultimateCharge < 5 || !isPlayerTurn || !monster) return;
-                setIsPlayerTurn(false);
                 
                 const playerClass = playerStats.playerClass || 'Adventurer';
                 let damage = 0;
                 let logMessage = '';
+                let isCritUltimate = true;
 
                 if (playerClass === 'Warrior') {
-                    damage = Math.floor(totalAttack * 3);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
                     const stunApplied = Math.random() < 0.5;
                     if (stunApplied) {
                         setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
@@ -1817,21 +1865,18 @@
                 } else if (playerClass === 'Archer') {
                     const weapon = playerStats.equipment.weapon;
                     const critMultiplier = (weapon?.critDamageMultiplier || 1.5) * 2;
-                    damage = Math.floor(totalAttack * critMultiplier);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * critMultiplier), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Archer.name}'! ${monster.name}에게 ${damage}의 치명적인 피해를 입혔다!`;
                 } else if (playerClass === 'Magician') {
-                    damage = Math.floor(totalAttack * 4);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 4), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
                 } else { // Adventurer
-                    damage = Math.floor(totalAttack * 2.5);
-                    damage = Math.max(1, damage - monster.defense);
+                    damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
                     logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
                 }
 
                 addLog(logMessage, 'player-turn');
-                addDamagePopup(String(damage), true, 'enemy');
+                addDamagePopup(String(damage), isCritUltimate, 'enemy');
                 setUltimateCharge(0);
 
                 const newMonsterHp = monster.hp - damage;
@@ -1840,15 +1885,16 @@
                     handleMonsterDefeated();
                 } else {
                     setMonster(m => ({ ...m, hp: newMonsterHp }));
+                    setIsPlayerTurn(false);
                 }
             };
             
             useEffect(() => {
-                if (!isPlayerTurn && monster?.hp > 0) {
+                if (!isPlayerTurn && monster?.hp > 0 && playerStats.hp > 0) {
                     const timer = setTimeout(() => handleEnemyTurn(), 1000);
                     return () => clearTimeout(timer);
                 }
-            }, [isPlayerTurn, monster, handleEnemyTurn]);
+            }, [isPlayerTurn, monster, playerStats, handleEnemyTurn]);
 
             if (!monster) return <div className="card">로딩 중...</div>;
 
@@ -1888,6 +1934,8 @@
                     <div style={{ marginTop: '20px', textAlign: 'center' }}>
                         {monster.hp <= 0 ? (
                             <p>다음 스테이지로 이동 중...</p>
+                        ) : playerStats.hp <= 0 ? (
+                            <p>마을로 돌아가는 중...</p>
                         ) : (
                              <div className="battle-actions">
                                 <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
@@ -1933,17 +1981,31 @@
             const [selectedItem, setSelectedItem] = useState(null);
 
             const enhancableItems = useMemo(() => {
-                return playerStats.inventory
-                    .filter(item => item.type === ItemType.WEAPON || item.type === ItemType.ARMOR)
-                    .map(item => ({ ...item, uniqueId: `${item.id}-${item.enhancementLevel || 0}` }));
-            }, [playerStats.inventory]);
+                const inventoryWithEquipment = [...playerStats.inventory];
+                if (playerStats.equipment.weapon) inventoryWithEquipment.push({...playerStats.equipment.weapon, quantity: 1, isEquipped: true });
+                if (playerStats.equipment.armor) inventoryWithEquipment.push({...playerStats.equipment.armor, quantity: 1, isEquipped: true });
+
+                // Deduplicate
+                const uniqueItems = new Map();
+                inventoryWithEquipment.forEach(item => {
+                    if (item.type !== ItemType.WEAPON && item.type !== ItemType.ARMOR) return;
+                    const uniqueId = `${item.id}-${item.enhancementLevel || 0}`;
+                    if (!uniqueItems.has(uniqueId)) {
+                        uniqueItems.set(uniqueId, item);
+                    } else {
+                         uniqueItems.get(uniqueId).quantity += item.quantity;
+                    }
+                });
+
+                return Array.from(uniqueItems.values());
+            }, [playerStats.inventory, playerStats.equipment]);
 
             const getEnhancementCost = (item) => {
                 if (!item) return { gold: 0, materials: [] };
                 const level = item.enhancementLevel || 0;
                 const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10 };
                 
-                const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level)) * gradeMultiplier[item.grade];
+                const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * gradeMultiplier[item.grade] * 0.9); // 10% discount
                 
                 let materialQuantity = 0;
                 if(level < 3) materialQuantity = 1 + level;
@@ -1980,7 +2042,8 @@
 
                 setPlayerStats(prev => {
                     let newInventory = [...prev.inventory];
-                    
+                    let newEquipment = {...prev.equipment};
+
                     // Deduct cost
                     let newGold = prev.gold - enhancementCost.gold;
                     enhancementCost.materials.forEach(mat => {
@@ -1989,12 +2052,16 @@
                     });
                     newInventory = newInventory.filter(i => i.quantity > 0);
 
-                    // Find and remove old item
-                    const itemIndex = newInventory.findIndex(i => i.id === selectedItem.id && (i.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0));
-                    if (newInventory[itemIndex].quantity > 1) {
-                         newInventory[itemIndex].quantity--;
-                    } else {
-                        newInventory.splice(itemIndex, 1);
+                    const isEquipped = selectedItem.isEquipped;
+
+                    if (!isEquipped) {
+                        // Find and remove old item from inventory
+                        const itemIndex = newInventory.findIndex(i => i.id === selectedItem.id && (i.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0));
+                        if (newInventory[itemIndex].quantity > 1) {
+                             newInventory[itemIndex].quantity--;
+                        } else {
+                            newInventory.splice(itemIndex, 1);
+                        }
                     }
 
                     // Add new enhanced item
@@ -2004,24 +2071,21 @@
                         quantity: 1,
                     };
                     delete newEnhancedItem.uniqueId;
+                    delete newEnhancedItem.isEquipped;
 
-                    const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
-                    if (existingStack) {
-                        existingStack.quantity++;
+                    if (isEquipped) {
+                         if (newEnhancedItem.type === ItemType.WEAPON) newEquipment.weapon = newEnhancedItem;
+                         if (newEnhancedItem.type === ItemType.ARMOR) newEquipment.armor = newEnhancedItem;
                     } else {
-                        newInventory.push(newEnhancedItem);
-                    }
-
-                    // Check if equipped item was enhanced
-                    let newEquipment = prev.equipment;
-                    if (prev.equipment.weapon?.id === selectedItem.id && (prev.equipment.weapon.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0)) {
-                        newEquipment.weapon = newEnhancedItem;
-                    }
-                    if (prev.equipment.armor?.id === selectedItem.id && (prev.equipment.armor.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0)) {
-                        newEquipment.armor = newEnhancedItem;
+                        const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
+                        if (existingStack) {
+                            existingStack.quantity++;
+                        } else {
+                            newInventory.push(newEnhancedItem);
+                        }
                     }
                     
-                    setSelectedItem(newEnhancedItem);
+                    setSelectedItem({...newEnhancedItem, isEquipped });
 
                     return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
                 });
@@ -2037,11 +2101,11 @@
                             <h3>강화할 아이템 선택</h3>
                             {enhancableItems.map(item => (
                                 <div 
-                                    key={item.uniqueId} 
-                                    className={`list-item ${selectedItem?.uniqueId === item.uniqueId ? 'selected' : ''}`}
+                                    key={`${item.id}-${item.enhancementLevel||0}`} 
+                                    className={`list-item ${selectedItem?.id === item.id && (selectedItem.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
                                     onClick={() => setSelectedItem(item)}
                                 >
-                                    <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)}</span>
+                                    <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} {item.isEquipped ? '[E]' : ''}</span>
                                 </div>
                             ))}
                         </div>
@@ -2225,7 +2289,7 @@
                     else if (rand < 0.25) drawnItem = allPets.find(p => p.grade === ItemGrade.EPIC);
                     else drawnItem = allPets[Math.floor(Math.random() * 2)]; // Two rare pets
                     
-                    setPlayerStats(prev => ({...prev, pets: [...prev.pets, drawnItem]}));
+                    setPlayerStats(prev => ({...prev, pets: [...prev.pets, {...drawnItem, id: Date.now() + Math.random()}]})); // Give unique id
                 } else { // item gacha
                     const rand = Math.random();
                     let gradeToDraw;
@@ -2387,7 +2451,7 @@
                 }
                 if (confirm(`${petToSell.name}을(를) ${petToSell.sellPrice} G에 판매하시겠습니까?`)) {
                     setPlayerStats(prev => {
-                        const newPets = prev.pets.filter(p => p.id !== petToSell.id); // Simple removal, no stacking
+                        const newPets = prev.pets.filter(p => p.id !== petToSell.id);
                         const newGold = prev.gold + petToSell.sellPrice;
                         return { ...prev, pets: newPets, gold: newGold };
                     });
@@ -2416,7 +2480,7 @@
                         <div className="pet-details-panel card">
                             {selectedPet ? (
                                 <>
-                                    <h3>{selectedPet.name} <span className={ItemGradeInfo[pet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
+                                    <h3>{selectedPet.name} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
                                     <p>공격력 보너스: +{selectedPet.attackBonus}</p>
                                     <p>방어력 보너스: +{selectedPet.defenseBonus}</p>
                                     <h4>스킬: {selectedPet.skillName}</h4>
@@ -2442,10 +2506,32 @@
         const App = () => {
             const [playerStats, setPlayerStats] = useState(() => {
                 const savedGame = localStorage.getItem('rpgGameState');
-                return savedGame ? JSON.parse(savedGame) : getInitialPlayerStats();
+                const initialStats = getInitialPlayerStats();
+                try {
+                    if (savedGame) {
+                        const loadedStats = JSON.parse(savedGame);
+                        // Simple fix: ensure pets have unique IDs upon loading old save data
+                        if (loadedStats.pets) {
+                             loadedStats.pets = loadedStats.pets.map((pet, index) => ({
+                                ...pet,
+                                id: pet.id && pet.id > 100 ? pet.id : Date.now() + index 
+                            }));
+                        }
+                        // Merge saved data with initial data to ensure new properties are present
+                        return { ...initialStats, ...loadedStats };
+                    }
+                } catch (error) {
+                    console.error("Failed to parse saved game state:", error);
+                    // If parsing fails, start a new game
+                    return initialStats;
+                }
+                return initialStats;
             });
             const [view, setView] = useState(View.TOWN);
             const [currentDungeon, setCurrentDungeon] = useState(null);
+            const [showDifficultyModal, setShowDifficultyModal] = useState(false);
+            const [battleDifficulty, setBattleDifficulty] = useState('Medium');
+
 
             useEffect(() => {
                 localStorage.setItem('rpgGameState', JSON.stringify(playerStats));
@@ -2469,6 +2555,12 @@
                 setView(View.TOWN);
             };
 
+             const handleStartBattle = (difficulty) => {
+                setBattleDifficulty(difficulty);
+                setShowDifficultyModal(false);
+                setView(View.BATTLE);
+            };
+
             const renderView = () => {
                 switch (view) {
                     case View.PLAYER:
@@ -2476,7 +2568,7 @@
                     case View.SHOP:
                         return <ShopView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.BATTLE:
-                        return <BattleView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                        return <BattleView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} difficulty={battleDifficulty} />;
                     case View.CLASS_SELECTION:
                         return <ClassSelectionView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.DUNGEON:
@@ -2497,11 +2589,29 @@
                         return <PetManagementView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
                     case View.TOWN:
                     default:
-                        return <TownView playerStats={playerStats} setView={setView} />;
+                        return <TownView playerStats={playerStats} setView={setView} setShowDifficultyModal={setShowDifficultyModal} />;
                 }
             };
 
-            return <Fragment>{renderView()}</Fragment>;
+            return (
+                <Fragment>
+                    {showDifficultyModal && (
+                        <div className="modal-backdrop">
+                            <div className="modal-content card" style={{textAlign: 'center'}}>
+                                <h2>난이도 선택</h2>
+                                <p>도전할 전투의 난이도를 선택하세요.</p>
+                                <div className="difficulty-buttons">
+                                    <button onClick={() => handleStartBattle('Easy')}>쉬움</button>
+                                    <button onClick={() => handleStartBattle('Medium')}>중간</button>
+                                    <button onClick={() => handleStartBattle('Hard')}>어려움</button>
+                                </div>
+                                <button onClick={() => setShowDifficultyModal(false)} style={{marginTop: '20px', backgroundColor: '#6c757d'}}>취소</button>
+                            </div>
+                        </div>
+                    )}
+                    {renderView()}
+                </Fragment>
+            );
         };
 
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
