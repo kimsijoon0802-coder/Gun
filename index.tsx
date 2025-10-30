@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback, Fragment, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -138,7 +139,7 @@ const allItems = [
     { id: 65, type: ItemType.ARMOR, name: '그림자 로브', price: 2800, grade: ItemGrade.EPIC, defense: 32, description: '어둠에 몸을 숨기기 좋은 로브. 약간의 마법 저항력도 있습니다.' },
     { id: 66, type: ItemType.ARMOR, name: '수호자의 갑옷', price: 7000, grade: ItemGrade.LEGENDARY, defense: 48, description: '고대 수호자들의 힘이 깃든 갑옷입니다.' },
     { id: 67, type: ItemType.CONSUMABLE, name: '최상급 체력 물약', price: 250, grade: ItemGrade.EPIC, effect: { type: 'heal', amount: 300 }, description: 'HP를 300 회복합니다.' },
-    { id: 68, type: ItemType.CONSUMABLE, name: '엘릭서', price: 1000, grade: ItemGrade.LEGENDARY, effect: { type: 'heal', amount: 9999 }, description: 'HP를 완전히 회복시킵니다.' },
+    { id: 68, type: ItemType.CONSUMABLE, name: '엘릭서', price: 2000, grade: ItemGrade.LEGENDARY, effect: { type: 'heal', amount: 9999 }, description: 'HP를 완전히 회복시킵니다.' },
     { id: 69, type: ItemType.CONSUMABLE, name: '강력한 화염병', price: 400, grade: ItemGrade.EPIC, effect: { type: 'damage_enemy', amount: 120 }, description: '적에게 120의 강력한 화염 피해를 입힙니다.' },
     { id: 70, type: ItemType.CONSUMABLE, name: '직업 변경 메달리온', price: 10000, grade: ItemGrade.EPIC, effect: { type: 'job_change' }, description: '사용 시 현재 직업을 초기화하고 새로운 직업을 선택할 수 있습니다.' },
     // --- 신화 등급 무기 ---
@@ -152,6 +153,9 @@ const allItems = [
     { id: 77, type: ItemType.ARMOR, name: '타이탄의 갑주', price: 240000, grade: ItemGrade.MYTHIC, defense: 120, description: '고대 타이탄의 힘이 깃든 갑옷. 입는 자에게 산과 같은 굳건함을 부여합니다.' },
     { id: 78, type: ItemType.ARMOR, name: '공허의 그림자 갑옷', price: 220000, grade: ItemGrade.MYTHIC, defense: 90, description: '공허의 힘으로 짜여진 갑옷. 그림자처럼 적의 공격을 흘려보냅니다.' },
     { id: 79, type: ItemType.ARMOR, name: '생명의 드래곤하트 아머', price: 230000, grade: ItemGrade.MYTHIC, defense: 110, description: '고대 용의 심장이 박힌 갑옷. 강력한 생명력으로 착용자를 보호합니다.' },
+    // --- 신규 제작 아이템 ---
+    { id: 80, type: ItemType.MATERIAL, name: '심연의 파편', price: 50000, grade: ItemGrade.MYTHIC, description: '나락의 군주의 힘이 응축된 파편. 신화 장비를 제작하는 데 사용됩니다.' },
+    { id: 81, type: ItemType.ARMOR, name: '심연을 걷는 자의 갑주', price: 400000, grade: ItemGrade.MYTHIC, defense: 180, description: '나락의 힘을 제어하는 자만이 입을 수 있는 갑옷. 착용자를 모든 위협으로부터 보호합니다.' }
 ];
 
 const allMaterials = [
@@ -164,21 +168,27 @@ const allRecipes = [
     { id: 1, name: '강철 검 제작', result: allItems.find(item => item.id === 3), materials: [{ materialId: 6, quantity: 5 }], requiredCraftingLevel: 1 },
     { id: 2, name: '가죽 갑옷 제작', result: allItems.find(item => item.id === 4), materials: [{ materialId: 7, quantity: 10 }], requiredCraftingLevel: 1 },
     { id: 3, name: '플레이트 아머 제작', result: allItems.find(item => item.id === 45), materials: [{ materialId: 6, quantity: 20 }, { materialId: 12, quantity: 5 }], requiredCraftingLevel: 5 },
+    { id: 4, name: '심연을 걷는 자의 갑주 제작', result: allItems.find(item => item.id === 81), materials: [{ materialId: 80, quantity: 5 }, { materialId: 12, quantity: 200 }], requiredCraftingLevel: 20 }
 ];
 
 const allMonsters = [
-    { id: 1, name: '슬라임', hp: 20, maxHp: 20, attack: 10, defense: 0, xp: 5, gold: 10, drops: [{ itemId: 7, chance: 0.1, quantity: 1 }], emoji: '🦠' },
-    { id: 2, name: '고블린', hp: 30, maxHp: 30, attack: 14, defense: 2, xp: 10, gold: 20, drops: [{ itemId: 2, chance: 0.05, quantity: 1 }], emoji: '👺' },
-    { id: 3, name: '오크', hp: 45, maxHp: 45, attack: 20, defense: 3, xp: 20, gold: 40, drops: [{ itemId: 3, chance: 0.02, quantity: 1 }], emoji: '👹' },
-    { id: 4, name: '던전 가디언', hp: 130, maxHp: 130, attack: 30, defense: 7, xp: 100, gold: 200, drops: [{ itemId: 12, chance: 0.5, quantity: 2 }], emoji: '🤖' },
-    { id: 101, name: '해골 기사', hp: 60, maxHp: 60, attack: 25, defense: 8, xp: 30, gold: 60, drops: [{ itemId: 9, chance: 0.05, quantity: 1 }], emoji: '💀' },
-    { id: 102, name: '오우거', hp: 80, maxHp: 80, attack: 35, defense: 5, xp: 50, gold: 100, drops: [{ itemId: 27, chance: 0.03, quantity: 1 }], emoji: '🦍' },
-    { id: 103, name: '리치', hp: 100, maxHp: 100, attack: 45, defense: 10, xp: 80, gold: 150, drops: [{ itemId: 34, chance: 0.02, quantity: 1 }], emoji: '🧙' },
-    { id: 104, name: '새끼용', hp: 250, maxHp: 250, attack: 60, defense: 18, xp: 300, gold: 500, drops: [{ itemId: 47, chance: 0.1, quantity: 1 }], emoji: '🐉' },
+    { id: 1, name: '슬라임', hp: 25, maxHp: 25, attack: 12, defense: 0, xp: 5, gold: 10, drops: [{ itemId: 7, chance: 0.1, quantity: 1 }], emoji: '🦠' },
+    { id: 2, name: '고블린', hp: 40, maxHp: 40, attack: 18, defense: 2, xp: 10, gold: 20, drops: [{ itemId: 2, chance: 0.05, quantity: 1 }], emoji: '👺' },
+    { id: 3, name: '오크', hp: 60, maxHp: 60, attack: 25, defense: 3, xp: 20, gold: 40, drops: [{ itemId: 3, chance: 0.02, quantity: 1 }], emoji: '👹' },
+    { id: 4, name: '던전 가디언', hp: 170, maxHp: 170, attack: 38, defense: 7, xp: 100, gold: 200, drops: [{ itemId: 12, chance: 0.5, quantity: 2 }], emoji: '🤖' },
+    { id: 101, name: '해골 기사', hp: 80, maxHp: 80, attack: 32, defense: 8, xp: 30, gold: 60, drops: [{ itemId: 9, chance: 0.05, quantity: 1 }], emoji: '💀' },
+    { id: 102, name: '오우거', hp: 105, maxHp: 105, attack: 44, defense: 5, xp: 50, gold: 100, drops: [{ itemId: 27, chance: 0.03, quantity: 1 }], emoji: '🦍' },
+    { id: 103, name: '리치', hp: 130, maxHp: 130, attack: 56, defense: 10, xp: 80, gold: 150, drops: [{ itemId: 34, chance: 0.02, quantity: 1 }], emoji: '🧙' },
+    { id: 104, name: '새끼용', hp: 325, maxHp: 325, attack: 75, defense: 18, xp: 300, gold: 500, drops: [{ itemId: 47, chance: 0.1, quantity: 1 }], emoji: '🐉' },
     // 신규 몬스터
-    { id: 201, name: '지옥의 군주', hp: 1000, maxHp: 1000, attack: 120, defense: 40, xp: 2000, gold: 5000, drops: [{ itemId: 12, chance: 1, quantity: 15 }], emoji: '😈' },
-    { id: 202, name: '고대 골렘', hp: 1500, maxHp: 1500, attack: 100, defense: 80, xp: 2500, gold: 6000, drops: [{ itemId: 12, chance: 1, quantity: 20 }], emoji: '🗿' },
-    { id: 203, name: '심연의 감시자', hp: 1200, maxHp: 1200, attack: 150, defense: 30, xp: 3000, gold: 7000, drops: [{ itemId: 12, chance: 1, quantity: 25 }], emoji: '👁️' },
+    { id: 201, name: '지옥의 군주', hp: 1300, maxHp: 1300, attack: 150, defense: 40, xp: 2000, gold: 5000, drops: [{ itemId: 12, chance: 1, quantity: 15 }], emoji: '😈' },
+    { id: 202, name: '고대 골렘', hp: 1950, maxHp: 1950, attack: 125, defense: 80, xp: 2500, gold: 6000, drops: [{ itemId: 12, chance: 1, quantity: 20 }], emoji: '🗿' },
+    { id: 203, name: '심연의 감시자', hp: 1560, maxHp: 1560, attack: 188, defense: 30, xp: 3000, gold: 7000, drops: [{ itemId: 12, chance: 1, quantity: 25 }], emoji: '👁️' },
+    // 초고난도 몬스터
+    { id: 301, name: '차원의 그림자', hp: 5200, maxHp: 5200, attack: 850, defense: 150, xp: 25000, gold: 50000, drops: [{ itemId: 12, chance: 1, quantity: 50 }], emoji: '👻' },
+    { id: 302, name: '혼돈의 화신', hp: 8000, maxHp: 8000, attack: 1050, defense: 220, xp: 40000, gold: 80000, drops: [{ itemId: 12, chance: 1, quantity: 75 }], emoji: '🌀' },
+    { id: 303, name: '태초의 존재', hp: 16000, maxHp: 16000, attack: 1250, defense: 300, xp: 100000, gold: 200000, drops: [{ itemId: 12, chance: 1, quantity: 150 }], emoji: '🌌' },
+    { id: 304, name: '나락의 군주, 아자토스', hp: 25000, maxHp: 25000, attack: 1600, defense: 350, xp: 200000, gold: 500000, drops: [{ itemId: 80, chance: 1, quantity: 1 }], emoji: '🐙' }
 ];
 
 const allDungeons = [
@@ -202,6 +212,36 @@ const allDungeons = [
     { id: 17, name: '세계의 척추', description: '세상을 떠받치는 거대한 산맥. 고대의 골렘들이 영원한 잠을 지키고 있습니다.', difficulty: 19, stages: 20, monsters: [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], rewards: { xp: 500000, gold: 1100000, items: [{ itemId: 76, quantity: 1 }] } },
     { id: 18, name: '창조주의 용광로', description: '세상이 만들어진 태초의 불꽃. 모든 것을 녹여버릴 듯한 열기가 가득합니다.', difficulty: 20, stages: 25, monsters: [201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201], rewards: { xp: 700000, gold: 1500000, items: [{ itemId: 77, quantity: 1 }] } },
     { id: 19, name: '무한의 도서관', description: '모든 지식과 역사가 기록된 곳. 기록의 수호자들이 침입자를 용서하지 않습니다.', difficulty: 21, stages: 30, monsters: [203, 203, 203, 203, 203, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 201, 202, 203, 203, 203], rewards: { xp: 1000000, gold: 2500000, items: [{ itemId: 78, quantity: 1 }] } },
+    { id: 20, name: '태초의 성역', description: '모든 존재의 근원, 우주의 법칙이 태어나고 소멸하는 곳. 신을 초월한 자만이 발을 들일 수 있습니다.', difficulty: 25, stages: 25, monsters: [201, 202, 203, 301, 201, 202, 203, 301, 201, 202, 203, 301, 302, 301, 302, 301, 302, 301, 302, 301, 302, 301, 302, 302, 303], rewards: { xp: 2500000, gold: 5000000, items: [{ itemId: 79, quantity: 1 }] } },
+    { id: 21, name: '무한의 나락', description: '모든 빛이 사라지고 오직 순수한 공포만이 존재하는 차원의 끝자락. 돌아온 자는 아무도 없습니다.', difficulty: 30, stages: 30, monsters: [301, 301, 302, 301, 302, 201, 202, 203, 301, 303, 301, 302, 301, 302, 303, 301, 302, 301, 302, 303, 301, 302, 301, 302, 303, 301, 302, 303, 303, 304], rewards: { xp: 5000000, gold: 10000000, items: [{ itemId: 80, quantity: 1 }] } },
+    { id: 22, name: '별빛의 회랑', description: '영롱한 별빛이 가득하지만, 그 그림자 속에는 차원을 삼키는 공포가 도사립니다.', difficulty: 32, stages: 30, monsters: [301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 303, 303, 304], rewards: { xp: 6000000, gold: 12000000, items: [{ itemId: 80, quantity: 2 }] } },
+    { id: 23, name: '영겁의 감옥', description: '시간마저 멈춘 듯한 감옥. 이곳에 갇힌 태초의 존재들이 자유를 갈망하며 울부짖습니다.', difficulty: 34, stages: 30, monsters: [302, 302, 303, 302, 302, 303, 302, 302, 303, 302, 302, 303, 302, 302, 303, 302, 302, 303, 302, 302, 303, 302, 302, 303, 303, 303, 303, 303, 304, 304], rewards: { xp: 7500000, gold: 15000000, items: [{ itemId: 80, quantity: 3 }] } },
+    { id: 24, name: '잊혀진 신들의 정원', description: '한때 신들이 거닐던 정원은 이제 혼돈의 화신들이 차지했습니다.', difficulty: 36, stages: 30, monsters: [301, 301, 301, 302, 302, 302, 303, 303, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 304, 304, 304], rewards: { xp: 9000000, gold: 18000000, items: [{ itemId: 76, quantity: 1 }] } },
+    { id: 25, name: '칠흑의 왕좌', description: '어둠보다 깊은 어둠 속, 나락의 군주가 당신의 도전을 기다립니다.', difficulty: 38, stages: 35, monsters: [303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 301, 302, 303, 301, 302, 303, 301, 302, 303, 301, 302, 303, 304, 304, 304], rewards: { xp: 11000000, gold: 22000000, items: [{ itemId: 80, quantity: 5 }] } },
+    { id: 26, name: '혼돈의 소용돌이', description: '모든 것이 뒤섞이고 파괴되는 혼돈의 중심. 질서는 존재하지 않습니다.', difficulty: 40, stages: 35, monsters: [301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 304, 304], rewards: { xp: 13000000, gold: 26000000, items: [{ itemId: 77, quantity: 1 }] } },
+    { id: 27, name: '시간 포식자의 둥지', description: '과거와 미래, 그리고 현재가 공존하는 곳. 시간을 지배하는 자만이 살아남습니다.', difficulty: 42, stages: 35, monsters: [303, 303, 303, 303, 304, 303, 303, 303, 303, 304, 303, 303, 303, 303, 304, 303, 303, 303, 303, 304, 303, 303, 303, 303, 304, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304], rewards: { xp: 15000000, gold: 30000000, items: [{ itemId: 80, quantity: 8 }] } },
+    { id: 28, name: '악몽의 현실', description: '당신의 가장 깊은 공포가 현실이 되어 눈앞에 나타납니다.', difficulty: 44, stages: 35, monsters: [301, 301, 301, 301, 301, 302, 302, 302, 302, 302, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 18000000, gold: 36000000, items: [{ itemId: 78, quantity: 1 }] } },
+    { id: 29, name: '공허의 핵', description: '모든 것이 시작되고 끝나는 지점. 존재와 비존재의 경계가 무너집니다.', difficulty: 46, stages: 40, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 302, 302, 302, 302, 302, 301, 301, 301, 301, 301, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 22000000, gold: 44000000, items: [{ itemId: 80, quantity: 10 }] } },
+    { id: 30, name: '부서진 하늘', description: '신들의 전쟁으로 산산조각 난 하늘. 그 파편 속에서 고대의 힘이 깨어납니다.', difficulty: 48, stages: 40, monsters: [301, 303, 301, 303, 301, 303, 301, 303, 301, 303, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 304, 304, 304], rewards: { xp: 26000000, gold: 52000000, items: [{ itemId: 71, quantity: 1 }] } },
+    { id: 31, name: '창조의 근원', description: '모든 생명이 시작된 곳. 하지만 지금은 파괴의 힘만이 남아있습니다.', difficulty: 50, stages: 40, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 30000000, gold: 60000000, items: [{ itemId: 80, quantity: 15 }] } },
+    { id: 32, name: '운명의 실타래', description: '모든 존재의 운명이 엮여있는 곳. 실을 끊는 순간, 모든 것이 사라집니다.', difficulty: 52, stages: 40, monsters: [301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 304, 304, 304, 304], rewards: { xp: 35000000, gold: 70000000, items: [{ itemId: 72, quantity: 1 }] } },
+    { id: 33, name: '침묵의 바다', description: '어떠한 소리도 존재하지 않는 심해. 오직 심연의 괴물들만이 존재를 알립니다.', difficulty: 54, stages: 40, monsters: [302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 40000000, gold: 80000000, items: [{ itemId: 80, quantity: 20 }] } },
+    { id: 34, name: '핏빛 사막', description: '패배한 신들의 피로 물든 사막. 모래알 하나하나가 원한을 품고 있습니다.', difficulty: 56, stages: 40, monsters: [303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 45000000, gold: 90000000, items: [{ itemId: 73, quantity: 1 }] } },
+    { id: 35, name: '만년빙벽', description: '세상의 끝에 위치한 거대한 얼음벽. 그 너머에는 무엇이 있을지 아무도 모릅니다.', difficulty: 58, stages: 45, monsters: [303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 50000000, gold: 100000000, items: [{ itemId: 80, quantity: 25 }] } },
+    { id: 36, name: '그림자 첨탑', description: '하늘에 닿을 듯 솟아있는 검은 첨탑. 빛이 닿지 않는 곳에서 어둠이 태어납니다.', difficulty: 60, stages: 45, monsters: [301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 55000000, gold: 110000000, items: [{ itemId: 74, quantity: 1 }] } },
+    { id: 37, name: '잿빛 황무지', description: '모든 것이 불타버리고 재만 남은 땅. 생명의 흔적은 찾아볼 수 없습니다.', difficulty: 62, stages: 45, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 302, 302, 302, 302, 302, 301, 301, 301, 301, 301, 304, 304, 304, 304, 304], rewards: { xp: 60000000, gold: 120000000, items: [{ itemId: 80, quantity: 30 }] } },
+    { id: 38, name: '저주받은 왕국', description: '탐욕으로 몰락한 고대 왕국. 왕과 신하들은 영원히 이곳을 떠돌고 있습니다.', difficulty: 64, stages: 45, monsters: [301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 301, 302, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 65000000, gold: 130000000, items: [{ itemId: 75, quantity: 1 }] } },
+    { id: 39, name: '신성 모독의 제단', description: '신을 부정하는 자들이 세운 금단의 제단. 불경한 힘이 당신을 시험합니다.', difficulty: 66, stages: 45, monsters: [304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 70000000, gold: 140000000, items: [{ itemId: 80, quantity: 40 }] } },
+    { id: 40, name: '꿈의 잔해', description: '누군가 꾸었던 거대한 꿈의 파편. 비논리적인 법칙이 지배하는 세계입니다.', difficulty: 68, stages: 50, monsters: [301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 75000000, gold: 150000000, items: [{ itemId: 81, quantity: 1 }] } },
+    { id: 41, name: '왜곡된 낙원', description: '겉보기에는 아름다운 낙원. 하지만 그 이면에는 끔찍한 진실이 숨어있습니다.', difficulty: 70, stages: 50, monsters: [301, 301, 301, 301, 301, 301, 301, 301, 301, 301, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 80000000, gold: 160000000, items: [{ itemId: 80, quantity: 50 }] } },
+    { id: 42, name: '종말의 전조', description: '세계가 끝나는 날의 풍경. 모든 것이 무로 돌아가기 직전의 순간입니다.', difficulty: 72, stages: 50, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 302, 302, 302, 302, 302, 301, 301, 301, 301, 301, 304, 304, 304, 304, 304], rewards: { xp: 85000000, gold: 170000000, items: [{ itemId: 76, quantity: 1 }, { itemId: 77, quantity: 1 }] } },
+    { id: 43, name: '무한의 계단', description: '오르고 또 올라도 끝이 보이지 않는 계단. 포기하는 순간, 당신의 존재는 소멸합니다.', difficulty: 75, stages: 50, monsters: [301, 301, 302, 302, 303, 303, 304, 304, 301, 301, 302, 302, 303, 303, 304, 304, 301, 301, 302, 302, 303, 303, 304, 304, 301, 301, 302, 302, 303, 303, 304, 304, 301, 301, 302, 302, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 90000000, gold: 180000000, items: [{ itemId: 80, quantity: 60 }] } },
+    { id: 44, name: '별을 삼킨 자의 무덤', description: '한때 우주를 위협했던 존재가 잠들어 있는 곳. 그의 남은 힘만으로도 세계를 파괴할 수 있습니다.', difficulty: 78, stages: 50, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 100000000, gold: 200000000, items: [{ itemId: 78, quantity: 1 }, { itemId: 79, quantity: 1 }] } },
+    { id: 45, name: '신의 눈물', description: '창조주가 흘린 눈물 한 방울이 만들어낸 작은 우주. 그 안에는 슬픔과 분노만이 가득합니다.', difficulty: 81, stages: 50, monsters: [303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 120000000, gold: 240000000, items: [{ itemId: 80, quantity: 80 }] } },
+    { id: 46, name: '존재의 끝', description: '모든 것이 사라진 후의 세계. 당신은 마지막 남은 존재입니까, 아니면 첫 번째 존재입니까?', difficulty: 85, stages: 50, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 150000000, gold: 300000000, items: [{ itemId: 80, quantity: 100 }] } },
+    { id: 47, name: '절대자의 영역', description: '이 게임의 법칙을 초월한 존재가 머무는 곳. 당신의 모든 데이터가 그의 손에 달려있습니다.', difficulty: 90, stages: 50, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 200000000, gold: 400000000, items: [{ itemId: 71, quantity: 1 }, { itemId: 76, quantity: 1 }] } },
+    { id: 48, name: '환장 그 자체', description: '설명이 필요한가요? 이 던전은 그냥... 환장합니다.', difficulty: 95, stages: 50, monsters: [301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 303, 302, 301, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 250000000, gold: 500000000, items: [{ itemId: 80, quantity: 150 }] } },
+    { id: 49, name: '개발자의 책상', description: '버그와 마감일, 그리고 끝없는 커피... 이 게임에서 가장 무서운 곳입니다. [개발자가 당신을 지켜보고 있습니다.]', difficulty: 100, stages: 1, monsters: [304], rewards: { xp: 999999999, gold: 999999999, items: [{ itemId: 81, quantity: 1 }] } }
 ];
 
 const allQuests = [
@@ -464,6 +504,7 @@ const ShopView = ({ playerStats, setPlayerStats, setView }) => {
         <div className="card">
             <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
             <h2>상점</h2>
+            <p style={{ textAlign: 'right', fontSize: '1.2em', fontWeight: 'bold' }}>보유 골드: {formatNumber(playerStats.gold)} G</p>
              <div className="shop-tabs">
                 <button className={shopTab === 'Weapons' ? 'active' : ''} onClick={() => setShopTab('Weapons')}>무기</button>
                 <button className={shopTab === 'Armor' ? 'active' : ''} onClick={() => setShopTab('Armor')}>방어구</button>
@@ -763,7 +804,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
                     newLevel++;
                     newMaxHp += 10;
                     newAttack += 2;
-                    newDefense += 1;
+                    newDefense += 2;
                     newXpToNextLevel = Math.floor(newXpToNextLevel * 1.2);
                     goldFromLevelUp += newLevel * 100;
                     addLog(`레벨 업! ${newLevel}레벨이 되었다!`, 'system-message');
@@ -1195,7 +1236,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
                 newLevel++;
                 newMaxHp += 10;
                 newAttack += 2;
-                newDefense += 1;
+                newDefense += 2;
                 newXpToNextLevel = Math.floor(newXpToNextLevel * 1.2);
                 addLog(`레벨 업! ${newLevel}레벨이 되었다!`, 'system-message');
             }
@@ -1471,7 +1512,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         </div>
     );
 };
-        
+
 const DungeonView = ({ setView, setCurrentDungeon }) => {
     return (
         <div className="card">
@@ -1500,7 +1541,7 @@ const DungeonView = ({ setView, setCurrentDungeon }) => {
         </div>
     );
 };
-        
+
 const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const [selectedItem, setSelectedItem] = useState(null);
 
@@ -1665,7 +1706,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
         </div>
     );
 };
-        
+
 const QuestBoardView = ({ playerStats, setPlayerStats, setView }) => {
     const [availableQuests, setAvailableQuests] = useState([]);
 
@@ -1715,7 +1756,7 @@ const QuestBoardView = ({ playerStats, setPlayerStats, setView }) => {
                 newLevel++;
                 newMaxHp += 10;
                 newAttack += 2;
-                newDefense += 1;
+                newDefense += 2;
                 newXpToNextLevel = Math.floor(newXpToNextLevel * 1.2);
                 alert(`레벨 업! ${newLevel}레벨이 되었다!`);
             }
@@ -1793,7 +1834,7 @@ const QuestBoardView = ({ playerStats, setPlayerStats, setView }) => {
         </div>
     );
 };
-        
+
 const GachaShrineView = ({ playerStats, setPlayerStats, setView }) => {
     const [gachaResult, setGachaResult] = useState(null);
 
@@ -1861,7 +1902,7 @@ const GachaShrineView = ({ playerStats, setPlayerStats, setView }) => {
         </div>
     );
 };
-        
+
 const TownHallView = ({ playerStats, setPlayerStats, setView }) => {
     const currentLevelInfo = townLevels[playerStats.townLevel - 1];
     const nextLevelInfo = townLevels[playerStats.townLevel] || null;
@@ -1949,7 +1990,7 @@ const TrophyRoadView = ({ playerStats, setPlayerStats, setView }) => {
         </div>
     );
 };
-        
+
 const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
     const [selectedPet, setSelectedPet] = useState(null);
 
@@ -2066,27 +2107,30 @@ const App = () => {
             localStorage.removeItem('rpgGameState');
             setPlayerStats(getInitialPlayerStats());
             setView(View.TOWN);
+            alert('게임이 초기화되었습니다.');
         }
     };
+
+    const startBattle = (difficulty) => {
+        setBattleDifficulty(difficulty);
+        setView(View.BATTLE);
+        setShowDifficultyModal(false);
+    };
+
+    const startDungeon = (dungeon) => {
+        setCurrentDungeon(dungeon);
+        setView(View.DUNGEON_BATTLE);
+    };
     
-    const endDungeon = (cleared) => {
-        if (cleared) {
-            alert("던전 공략에 성공했습니다!");
-        } else {
-             alert("던전 공략에 실패했습니다. 마을로 돌아갑니다.");
-        }
+    const endDungeon = (isCompleted) => {
         setCurrentDungeon(null);
         setView(View.TOWN);
     };
 
-     const handleStartBattle = (difficulty) => {
-        setBattleDifficulty(difficulty);
-        setShowDifficultyModal(false);
-        setView(View.BATTLE);
-    };
-
     const renderView = () => {
         switch (view) {
+            case View.TOWN:
+                return <TownView playerStats={playerStats} setView={setView} setShowDifficultyModal={setShowDifficultyModal} />;
             case View.PLAYER:
                 return <PlayerStatsView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} resetGame={resetGame} />;
             case View.SHOP:
@@ -2096,11 +2140,11 @@ const App = () => {
             case View.CLASS_SELECTION:
                 return <ClassSelectionView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
             case View.DUNGEON:
-                return <DungeonView setView={setView} setCurrentDungeon={(d) => { setCurrentDungeon(d); setView(View.DUNGEON_BATTLE); }} />;
+                return <DungeonView setView={setView} setCurrentDungeon={startDungeon} />;
             case View.DUNGEON_BATTLE:
-                 return <DungeonBattleView dungeon={currentDungeon} playerStats={playerStats} setPlayerStats={setPlayerStats} endDungeon={endDungeon} />;
+                return <DungeonBattleView dungeon={currentDungeon} playerStats={playerStats} setPlayerStats={setPlayerStats} endDungeon={endDungeon} />;
             case View.BLACKSMITH:
-                return <BlacksmithView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
+                 return <BlacksmithView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
             case View.QUEST_BOARD:
                 return <QuestBoardView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
             case View.GACHA_SHRINE:
@@ -2110,8 +2154,7 @@ const App = () => {
             case View.TROPHY_ROAD:
                 return <TrophyRoadView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
             case View.PETS:
-                return <PetManagementView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
-            case View.TOWN:
+                 return <PetManagementView playerStats={playerStats} setPlayerStats={setPlayerStats} setView={setView} />;
             default:
                 return <TownView playerStats={playerStats} setView={setView} setShowDifficultyModal={setShowDifficultyModal} />;
         }
@@ -2121,15 +2164,15 @@ const App = () => {
         <Fragment>
             {showDifficultyModal && (
                 <div className="modal-backdrop">
-                    <div className="modal-content card" style={{textAlign: 'center'}}>
-                        <h2>난이도 선택</h2>
-                        <p>도전할 전투의 난이도를 선택하세요.</p>
+                    <div className="modal-content card">
+                        <h3>난이도 선택</h3>
+                        <p>전투 난이도를 선택하세요.</p>
                         <div className="difficulty-buttons">
-                            <button onClick={() => handleStartBattle('Easy')}>쉬움</button>
-                            <button onClick={() => handleStartBattle('Medium')}>중간</button>
-                            <button onClick={() => handleStartBattle('Hard')}>어려움</button>
+                            <button onClick={() => startBattle('Easy')}>쉬움</button>
+                            <button onClick={() => startBattle('Medium')}>중간</button>
+                            <button onClick={() => startBattle('Hard')}>어려움</button>
                         </div>
-                        <button onClick={() => setShowDifficultyModal(false)} style={{marginTop: '20px', backgroundColor: '#6c757d'}}>취소</button>
+                        <button onClick={() => setShowDifficultyModal(false)} style={{marginTop: '20px'}}>취소</button>
                     </div>
                 </div>
             )}
