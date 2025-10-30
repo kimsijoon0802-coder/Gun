@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, Fragment, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -34,6 +33,7 @@ const ItemGrade = {
     EPIC: 'EPIC',
     LEGENDARY: 'LEGENDARY',
     MYTHIC: 'MYTHIC',
+    SECRET: 'SECRET',
 };
 
 const ItemGradeInfo = {
@@ -42,7 +42,8 @@ const ItemGradeInfo = {
     [ItemGrade.RARE]: { name: '희귀', color: '#0070dd', class: 'grade-rare', order: 3 },
     [ItemGrade.EPIC]: { name: '영웅', color: '#a335ee', class: 'grade-epic', order: 4 },
     [ItemGrade.LEGENDARY]: { name: '전설', color: '#ff8000', class: 'grade-legendary', order: 5 },
-    [ItemGrade.MYTHIC]: { name: '신화', color: '#00ffff', class: 'grade-mythic', order: 6 }
+    [ItemGrade.MYTHIC]: { name: '신화', color: '#00ffff', class: 'grade-mythic', order: 6 },
+    [ItemGrade.SECRET]: { name: '시크릿', color: '#ff00ff', class: 'grade-secret', order: 7 },
 };
 
 const PlayerClasses = {
@@ -155,7 +156,14 @@ const allItems = [
     { id: 79, type: ItemType.ARMOR, name: '생명의 드래곤하트 아머', price: 230000, grade: ItemGrade.MYTHIC, defense: 110, description: '고대 용의 심장이 박힌 갑옷. 강력한 생명력으로 착용자를 보호합니다.' },
     // --- 신규 제작 아이템 ---
     { id: 80, type: ItemType.MATERIAL, name: '심연의 파편', price: 50000, grade: ItemGrade.MYTHIC, description: '나락의 군주의 힘이 응축된 파편. 신화 장비를 제작하는 데 사용됩니다.' },
-    { id: 81, type: ItemType.ARMOR, name: '심연을 걷는 자의 갑주', price: 400000, grade: ItemGrade.MYTHIC, defense: 180, description: '나락의 힘을 제어하는 자만이 입을 수 있는 갑옷. 착용자를 모든 위협으로부터 보호합니다.' }
+    { id: 81, type: ItemType.ARMOR, name: '심연을 걷는 자의 갑주', price: 400000, grade: ItemGrade.MYTHIC, defense: 180, description: '나락의 힘을 제어하는 자만이 입을 수 있는 갑옷. 착용자를 모든 위협으로부터 보호합니다.' },
+    // --- 시크릿 등급 무기 ---
+    { id: 82, type: ItemType.WEAPON, name: '궁극의 지배자', price: 1000000, grade: ItemGrade.SECRET, damage: 300, accuracy: 1.1, critChance: 0.4, critDamageMultiplier: 4.0, procChance: 0.5, procDamage: 200, description: '모든 것을 지배하는 자의 검. 50% 확률로 차원의 균열을 열어 추가 피해를 입힙니다.' },
+    { id: 83, type: ItemType.WEAPON, name: '아카식 레코드', price: 1200000, grade: ItemGrade.SECRET, damage: 250, accuracy: 1.5, weaponType: 'Bow', critChance: 0.6, critDamageMultiplier: 5.0, description: '세상의 모든 지식이 담긴 활. 모든 공격이 약점을 꿰뚫습니다.' },
+    { id: 84, type: ItemType.WEAPON, name: '카오스 이레이저', price: 1100000, grade: ItemGrade.SECRET, damage: 350, accuracy: 0.9, weaponType: 'Gun', description: '존재 자체를 소멸시키는 총. 막대한 파괴력을 가집니다.' },
+    // --- 시크릿 등급 방어구 ---
+    { id: 85, type: ItemType.ARMOR, name: '절대자의 가호', price: 800000, grade: ItemGrade.SECRET, defense: 250, description: '어떠한 공격도 막아내는 신의 가호가 깃든 갑옷입니다.' },
+    { id: 86, type: ItemType.ARMOR, name: '시간 여행자의 외투', price: 900000, grade: ItemGrade.SECRET, defense: 220, description: '시간의 흐름 속에서 단련된 외투. 입는 자를 인과율로부터 보호합니다.' }
 ];
 
 const allMaterials = [
@@ -1306,22 +1314,19 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         setEnemyAttacking(true);
         setTimeout(() => setEnemyAttacking(false), 400);
 
-        let damage = calculateDamage(monster.attack, totalDefense);
+        const damage = calculateDamage(monster.attack, totalDefense);
         addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
         addDamagePopup(String(damage), false, 'player');
         
-        setPlayerStats(prev => {
-            const newPlayerHp = prev.hp - damage;
-            if (newPlayerHp <= 0) {
-                handleBattleFailed();
-                return { ...prev, hp: 0 };
-            }
-            return { ...prev, hp: newPlayerHp };
-        });
-        if (playerStats.hp > damage) {
+        const newPlayerHp = playerStats.hp - damage;
+        setPlayerStats(prev => ({ ...prev, hp: newPlayerHp }));
+
+        if (newPlayerHp <= 0) {
+            handleBattleFailed();
+        } else {
             setIsPlayerTurn(true);
         }
-    }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats]);
+    }, [monster, playerStats.hp, playerStats.playerName, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats]);
 
     const handlePlayerAttack = () => {
         if (!isPlayerTurn || !monster) return;
