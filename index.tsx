@@ -384,17 +384,34 @@ const PlayerStatsView = ({ playerStats, setPlayerStats, setView, resetGame }) =>
 
     const totalAttack = useMemo(() => {
         const weaponDamage = playerStats.equipment.weapon?.damage || 0;
-        const enhancementBonus = playerStats.equipment.weapon?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.attackBonus || 0 : 0;
-        return playerStats.attack + weaponDamage + (enhancementBonus * 2) + petBonus;
+        const weaponEnhancementBonus = playerStats.equipment.weapon?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.attackBonus || 0) + ((pet.enhancementLevel || 0) * 2);
+            }
+        }
+
+        return playerStats.attack + weaponDamage + (weaponEnhancementBonus * 2) + petBonus;
     }, [playerStats]);
 
     const totalDefense = useMemo(() => {
         const armorDefense = playerStats.equipment.armor?.defense || 0;
-        const enhancementBonus = playerStats.equipment.armor?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.defenseBonus || 0 : 0;
-        return playerStats.defense + armorDefense + enhancementBonus + petBonus;
+        const armorEnhancementBonus = playerStats.equipment.armor?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+            }
+        }
+
+        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
     }, [playerStats]);
+
 
     return (
         <div className="card">
@@ -708,17 +725,32 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
     const totalAttack = useMemo(() => {
         const weapon = playerStats.equipment.weapon;
         const weaponDamage = weapon?.damage || 0;
-        const enhancementBonus = weapon?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.attackBonus || 0 : 0;
-        return playerStats.attack + weaponDamage + (enhancementBonus * 2) + petBonus;
+        const weaponEnhancementBonus = weapon?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.attackBonus || 0) + ((pet.enhancementLevel || 0) * 2);
+            }
+        }
+
+        return playerStats.attack + weaponDamage + (weaponEnhancementBonus * 2) + petBonus;
     }, [playerStats]);
 
     const totalDefense = useMemo(() => {
         const armor = playerStats.equipment.armor;
         const armorDefense = armor?.defense || 0;
-        const enhancementBonus = armor?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.defenseBonus || 0 : 0;
-        return playerStats.defense + armorDefense + enhancementBonus + petBonus;
+        const armorEnhancementBonus = armor?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+            }
+        }
+        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
     }, [playerStats]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
@@ -1179,17 +1211,33 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
     const totalAttack = useMemo(() => {
         const weapon = playerStats.equipment.weapon;
         const weaponDamage = weapon?.damage || 0;
-        const enhancementBonus = weapon?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.attackBonus || 0 : 0;
-        return playerStats.attack + weaponDamage + (enhancementBonus * 2) + petBonus;
+        const weaponEnhancementBonus = weapon?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.attackBonus || 0) + ((pet.enhancementLevel || 0) * 2);
+            }
+        }
+
+        return playerStats.attack + weaponDamage + (weaponEnhancementBonus * 2) + petBonus;
     }, [playerStats]);
 
     const totalDefense = useMemo(() => {
         const armor = playerStats.equipment.armor;
         const armorDefense = armor?.defense || 0;
-        const enhancementBonus = armor?.enhancementLevel || 0;
-        const petBonus = playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId)?.defenseBonus || 0 : 0;
-        return playerStats.defense + armorDefense + enhancementBonus + petBonus;
+        const armorEnhancementBonus = armor?.enhancementLevel || 0;
+        
+        let petBonus = 0;
+        if (playerStats.activePetId) {
+            const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
+            if (pet) {
+                petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+            }
+        }
+
+        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
     }, [playerStats]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
@@ -1548,34 +1596,40 @@ const DungeonView = ({ setView, setCurrentDungeon }) => {
 };
 
 const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
-    const [selectedItem, setSelectedItem] = useState(null);
+    const [tab, setTab] = useState('item'); // 'item' or 'pet'
+    const [selectedEntity, setSelectedEntity] = useState(null);
 
     const enhancableItems = useMemo(() => {
         const inventoryWithEquipment = [...playerStats.inventory];
         if (playerStats.equipment.weapon) inventoryWithEquipment.push({...playerStats.equipment.weapon, quantity: 1, isEquipped: true });
         if (playerStats.equipment.armor) inventoryWithEquipment.push({...playerStats.equipment.armor, quantity: 1, isEquipped: true });
 
-        // Deduplicate
         const uniqueItems = new Map();
         inventoryWithEquipment.forEach(item => {
             if (item.type !== ItemType.WEAPON && item.type !== ItemType.ARMOR) return;
             const uniqueId = `${item.id}-${item.enhancementLevel || 0}`;
             if (!uniqueItems.has(uniqueId)) {
-                uniqueItems.set(uniqueId, item);
+                uniqueItems.set(uniqueId, { ...item });
             } else {
-                 uniqueItems.get(uniqueId).quantity += item.quantity;
+                 const existing = uniqueItems.get(uniqueId);
+                 existing.quantity += item.quantity;
+                 if(item.isEquipped) existing.isEquipped = true;
             }
         });
 
         return Array.from(uniqueItems.values());
     }, [playerStats.inventory, playerStats.equipment]);
+    
+    const enhancablePets = useMemo(() => {
+        return [...playerStats.pets].sort((a, b) => (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0));
+    }, [playerStats.pets]);
 
-    const getEnhancementCost = (item) => {
+    const getItemEnhancementCost = (item) => {
         if (!item) return { gold: 0, materials: [] };
         const level = item.enhancementLevel || 0;
-        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10 };
+        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20 };
         
-        const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * gradeMultiplier[item.grade] * 0.9); // 10% discount
+        const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * (gradeMultiplier[item.grade] || 1));
         
         let materialQuantity = 0;
         if(level < 3) materialQuantity = 1 + level;
@@ -1583,7 +1637,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
         else if (level < 9) materialQuantity = 15 + (level - 6) * 5;
         else materialQuantity = 40 + (level - 9) * 10;
 
-        materialQuantity = Math.floor(materialQuantity * (gradeMultiplier[item.grade] / 2 + 0.5));
+        materialQuantity = Math.floor(materialQuantity * ((gradeMultiplier[item.grade] || 1) / 2 + 0.5));
 
         return {
             gold: goldCost,
@@ -1591,10 +1645,24 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
         };
     };
     
-    const enhancementCost = getEnhancementCost(selectedItem);
+    const getPetEnhancementCost = (pet) => {
+        if (!pet) return { gold: 0, materials: [] };
+        const level = pet.enhancementLevel || 0;
+        const gradeMultiplier = { [ItemGrade.RARE]: 2, [ItemGrade.EPIC]: 4, [ItemGrade.LEGENDARY]: 8, [ItemGrade.MYTHIC]: 16, [ItemGrade.SECRET]: 32 };
+
+        const goldCost = Math.floor(200 * Math.pow(1.8, level) * (gradeMultiplier[pet.grade] || 1));
+        const materialQuantity = Math.ceil(3 * Math.pow(1.6, level) * (gradeMultiplier[pet.grade] || 1));
+
+        return {
+            gold: goldCost,
+            materials: [{ materialId: 12, quantity: materialQuantity }]
+        };
+    };
+    
+    const enhancementCost = tab === 'item' ? getItemEnhancementCost(selectedEntity) : getPetEnhancementCost(selectedEntity);
 
     const canEnhance = () => {
-        if (!selectedItem) return false;
+        if (!selectedEntity) return false;
         if (playerStats.gold < enhancementCost.gold) return false;
         
         for (const mat of enhancementCost.materials) {
@@ -1604,7 +1672,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
         return true;
     };
 
-    const handleEnhance = () => {
+    const handleItemEnhance = () => {
         if (!canEnhance()) {
             alert('재료 또는 골드가 부족합니다.');
             return;
@@ -1622,11 +1690,10 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             });
             newInventory = newInventory.filter(i => i.quantity > 0);
 
-            const isEquipped = selectedItem.isEquipped;
+            const isEquipped = selectedEntity.isEquipped;
 
             if (!isEquipped) {
-                // Find and remove old item from inventory
-                const itemIndex = newInventory.findIndex(i => i.id === selectedItem.id && (i.enhancementLevel || 0) === (selectedItem.enhancementLevel || 0));
+                const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
                 if (newInventory[itemIndex].quantity > 1) {
                      newInventory[itemIndex].quantity--;
                 } else {
@@ -1634,13 +1701,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 }
             }
 
-            // Add new enhanced item
-            const newEnhancedItem = {
-                ...selectedItem,
-                enhancementLevel: (selectedItem.enhancementLevel || 0) + 1,
-                quantity: 1,
-            };
-            delete newEnhancedItem.uniqueId;
+            const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1, quantity: 1 };
             delete newEnhancedItem.isEquipped;
 
             if (isEquipped) {
@@ -1655,37 +1716,86 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 }
             }
             
-            setSelectedItem({...newEnhancedItem, isEquipped });
-
+            setSelectedEntity({...newEnhancedItem, isEquipped });
             return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
         });
         alert('강화에 성공했습니다!');
+    };
+    
+    const handlePetEnhance = () => {
+        if (!canEnhance()) {
+            alert('재료 또는 골드가 부족합니다.');
+            return;
+        }
+
+        setPlayerStats(prev => {
+            let newInventory = [...prev.inventory];
+            let newGold = prev.gold - enhancementCost.gold;
+            enhancementCost.materials.forEach(mat => {
+                const matIndex = newInventory.findIndex(i => i.id === mat.materialId);
+                if (matIndex !== -1) newInventory[matIndex].quantity -= mat.quantity;
+            });
+            newInventory = newInventory.filter(i => i.quantity > 0);
+            
+            const newPets = prev.pets.map(p => 
+                p.id === selectedEntity.id 
+                ? { ...p, enhancementLevel: (p.enhancementLevel || 0) + 1 }
+                : p
+            );
+            
+            const newlyEnhancedPet = newPets.find(p => p.id === selectedEntity.id);
+            setSelectedEntity(newlyEnhancedPet);
+
+            return { ...prev, gold: newGold, inventory: newInventory, pets: newPets };
+        });
+        alert('펫 강화에 성공했습니다!');
     };
 
     return (
         <div className="card">
             <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
             <h2>대장간</h2>
+            <div className="shop-tabs">
+                <button className={tab === 'item' ? 'active' : ''} onClick={() => { setTab('item'); setSelectedEntity(null); }}>장비 강화</button>
+                <button className={tab === 'pet' ? 'active' : ''} onClick={() => { setTab('pet'); setSelectedEntity(null); }}>펫 강화</button>
+            </div>
             <div className="blacksmith-container">
                 <div className="item-list-panel card">
-                    <h3>강화할 아이템 선택</h3>
-                    {enhancableItems.map(item => (
-                        <div 
-                            key={`${item.id}-${item.enhancementLevel||0}`} 
-                            className={`list-item ${selectedItem?.id === item.id && (selectedItem.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
-                            onClick={() => setSelectedItem(item)}
-                        >
-                            <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} {item.isEquipped ? '[E]' : ''}</span>
-                        </div>
-                    ))}
+                    <h3>강화할 대상 선택</h3>
+                    {tab === 'item' ? (
+                        enhancableItems.map(item => (
+                            <div 
+                                key={`${item.id}-${item.enhancementLevel||0}`} 
+                                className={`list-item ${selectedEntity?.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
+                                onClick={() => setSelectedEntity(item)}
+                            >
+                                <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} {item.isEquipped ? '[E]' : ''}</span>
+                            </div>
+                        ))
+                    ) : (
+                        enhancablePets.map(pet => (
+                             <div 
+                                key={pet.id} 
+                                className={`list-item ${selectedEntity?.id === pet.id ? 'selected' : ''}`}
+                                onClick={() => setSelectedEntity(pet)}
+                            >
+                                <span className={ItemGradeInfo[pet.grade]?.class}>{getDisplayName(pet)}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
                 <div className="enhancement-panel card">
-                    {selectedItem ? (
+                    {!selectedEntity ? <p>강화할 대상을 선택해주세요.</p> : (
                         <>
-                            <h3>{getDisplayName(selectedItem)} 강화</h3>
-                            <div className="enhancement-stats">
-                                {selectedItem.type === ItemType.WEAPON && <p>공격력: {selectedItem.damage + ((selectedItem.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedItem.damage + ((selectedItem.enhancementLevel || 0) + 1) * 2}</p>}
-                                {selectedItem.type === ItemType.ARMOR && <p>방어력: {selectedItem.defense + (selectedItem.enhancementLevel || 0)} <span className="arrow">→</span> {selectedItem.defense + (selectedItem.enhancementLevel || 0) + 1}</p>}
+                            <h3>{getDisplayName(selectedEntity)} 강화</h3>
+                             <div className="enhancement-stats">
+                                {tab === 'item' ? (<>
+                                    {selectedEntity.type === ItemType.WEAPON && <p>공격력: {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>}
+                                    {selectedEntity.type === ItemType.ARMOR && <p>방어력: {selectedEntity.defense + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defense + (selectedEntity.enhancementLevel || 0) + 1}</p>}
+                                </>) : (<>
+                                    <p>공격력 보너스: {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>
+                                    <p>방어력 보너스: {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0) + 1}</p>
+                                </>)}
                             </div>
                             <h4>필요 재료</h4>
                             <ul className="material-list">
@@ -1703,9 +1813,9 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                                     )
                                 })}
                             </ul>
-                            <button onClick={handleEnhance} disabled={!canEnhance()}>강화하기</button>
+                            <button onClick={tab === 'item' ? handleItemEnhance : handlePetEnhance} disabled={!canEnhance()}>강화하기</button>
                         </>
-                    ) : <p>강화할 아이템을 선택해주세요.</p>}
+                    )}
                 </div>
             </div>
         </div>
@@ -2019,7 +2129,7 @@ const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
             alert('활성화된 펫은 판매할 수 없습니다.');
             return;
         }
-        if (confirm(`${petToSell.name}을(를) ${petToSell.sellPrice} G에 판매하시겠습니까?`)) {
+        if (confirm(`${getDisplayName(petToSell)}을(를) ${petToSell.sellPrice} G에 판매하시겠습니까?`)) {
             setPlayerStats(prev => {
                 const newPets = prev.pets.filter(p => p.id !== petToSell.id);
                 const newGold = prev.gold + petToSell.sellPrice;
@@ -2043,16 +2153,18 @@ const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
                             className={`pet-card ${selectedPet?.id === pet.id ? 'selected' : ''} ${playerStats.activePetId === pet.id ? 'active' : ''}`}
                             onClick={() => setSelectedPet(pet)}
                         >
-                            <strong className={ItemGradeInfo[pet.grade].class}>{pet.name}</strong>
+                            <strong className={ItemGradeInfo[pet.grade].class}>{getDisplayName(pet)}</strong>
                         </div>
                     )) : <p>보유한 펫이 없습니다.</p>}
                 </div>
                 <div className="pet-details-panel card">
                     {selectedPet ? (
                         <>
-                            <h3>{selectedPet.name} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
-                            <p>공격력 보너스: +{selectedPet.attackBonus}</p>
-                            <p>방어력 보너스: +{selectedPet.defenseBonus}</p>
+                            <h3>{getDisplayName(selectedPet)} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
+                            <p>기본 공격력 보너스: +{selectedPet.attackBonus}</p>
+                            <p>기본 방어력 보너스: +{selectedPet.defenseBonus}</p>
+                            <p><strong>총 공격력 보너스: +{(selectedPet.attackBonus || 0) + ((selectedPet.enhancementLevel || 0) * 2)}</strong></p>
+                            <p><strong>총 방어력 보너스: +{(selectedPet.defenseBonus || 0) + (selectedPet.enhancementLevel || 0)}</strong></p>
                             <h4>스킬: {selectedPet.skillName}</h4>
                             <p>{selectedPet.skillDescription}</p>
                             {playerStats.activePetId === selectedPet.id ? (
