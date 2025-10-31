@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 const ItemType = {
     WEAPON: 'Weapon',
     ARMOR: 'Armor',
+    PET_ARMOR: 'PetArmor',
     CONSUMABLE: 'Consumable',
     MATERIAL: 'Material',
 };
@@ -163,7 +164,11 @@ const allItems = [
     { id: 84, type: ItemType.WEAPON, name: '카오스 이레이저', price: 1100000, grade: ItemGrade.SECRET, damage: 350, accuracy: 0.9, weaponType: 'Gun', description: '존재 자체를 소멸시키는 총. 막대한 파괴력을 가집니다.' },
     // --- 시크릿 등급 방어구 ---
     { id: 85, type: ItemType.ARMOR, name: '절대자의 가호', price: 800000, grade: ItemGrade.SECRET, defense: 250, description: '어떠한 공격도 막아내는 신의 가호가 깃든 갑옷입니다.' },
-    { id: 86, type: ItemType.ARMOR, name: '시간 여행자의 외투', price: 900000, grade: ItemGrade.SECRET, defense: 220, description: '시간의 흐름 속에서 단련된 외투. 입는 자를 인과율로부터 보호합니다.' }
+    { id: 86, type: ItemType.ARMOR, name: '시간 여행자의 외투', price: 900000, grade: ItemGrade.SECRET, defense: 220, description: '시간의 흐름 속에서 단련된 외투. 입는 자를 인과율로부터 보호합니다.' },
+    // --- 펫 방어구 ---
+    { id: 87, type: ItemType.PET_ARMOR, name: '가죽 펫 갑옷', price: 150, grade: ItemGrade.COMMON, defense: 3, description: '반려동물을 위한 기본적인 가죽 갑옷.' },
+    { id: 88, type: ItemType.PET_ARMOR, name: '강철 펫 흉갑', price: 500, grade: ItemGrade.UNCOMMON, defense: 8, description: '튼튼한 강철로 만들어진 펫 흉갑.' },
+    { id: 89, type: ItemType.PET_ARMOR, name: '미스릴 펫 체인', price: 2000, grade: ItemGrade.RARE, defense: 15, description: '가볍고 견고한 미스릴 펫 갑옷.' },
 ];
 
 const allMaterials = [
@@ -406,6 +411,10 @@ const PlayerStatsView = ({ playerStats, setPlayerStats, setView, resetGame }) =>
             const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
             if (pet) {
                 petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+                const petArmor = pet.equipment?.armor;
+                if(petArmor) {
+                    petBonus += (petArmor.defense || 0) + (petArmor.enhancementLevel || 0);
+                }
             }
         }
 
@@ -521,6 +530,7 @@ const ShopView = ({ playerStats, setPlayerStats, setView }) => {
     const itemsToDisplay = sortedShopItems.filter(item => {
         if (shopTab === 'Weapons') return item.type === ItemType.WEAPON;
         if (shopTab === 'Armor') return item.type === ItemType.ARMOR;
+        if (shopTab === 'PetArmor') return item.type === ItemType.PET_ARMOR;
         if (shopTab === 'Consumables') return item.type === ItemType.CONSUMABLE;
         return false;
     });
@@ -533,6 +543,7 @@ const ShopView = ({ playerStats, setPlayerStats, setView }) => {
              <div className="shop-tabs">
                 <button className={shopTab === 'Weapons' ? 'active' : ''} onClick={() => setShopTab('Weapons')}>무기</button>
                 <button className={shopTab === 'Armor' ? 'active' : ''} onClick={() => setShopTab('Armor')}>방어구</button>
+                <button className={shopTab === 'PetArmor' ? 'active' : ''} onClick={() => setShopTab('PetArmor')}>펫 방어구</button>
                 <button className={shopTab === 'Consumables' ? 'active' : ''} onClick={() => setShopTab('Consumables')}>소모품</button>
             </div>
             <div className="shop-grid">
@@ -748,6 +759,10 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
             if (pet) {
                 petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+                const petArmor = pet.equipment?.armor;
+                if(petArmor) {
+                    petBonus += (petArmor.defense || 0) + (petArmor.enhancementLevel || 0);
+                }
             }
         }
         return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
@@ -1234,6 +1249,10 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             const pet = playerStats.pets.find(p => p.id === playerStats.activePetId);
             if (pet) {
                 petBonus = (pet.defenseBonus || 0) + (pet.enhancementLevel || 0);
+                const petArmor = pet.equipment?.armor;
+                if(petArmor) {
+                    petBonus += (petArmor.defense || 0) + (petArmor.enhancementLevel || 0);
+                }
             }
         }
 
@@ -1600,25 +1619,10 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const [selectedEntity, setSelectedEntity] = useState(null);
 
     const enhancableItems = useMemo(() => {
-        const inventoryWithEquipment = [...playerStats.inventory];
-        if (playerStats.equipment.weapon) inventoryWithEquipment.push({...playerStats.equipment.weapon, quantity: 1, isEquipped: true });
-        if (playerStats.equipment.armor) inventoryWithEquipment.push({...playerStats.equipment.armor, quantity: 1, isEquipped: true });
-
-        const uniqueItems = new Map();
-        inventoryWithEquipment.forEach(item => {
-            if (item.type !== ItemType.WEAPON && item.type !== ItemType.ARMOR) return;
-            const uniqueId = `${item.id}-${item.enhancementLevel || 0}`;
-            if (!uniqueItems.has(uniqueId)) {
-                uniqueItems.set(uniqueId, { ...item });
-            } else {
-                 const existing = uniqueItems.get(uniqueId);
-                 existing.quantity += item.quantity;
-                 if(item.isEquipped) existing.isEquipped = true;
-            }
-        });
-
-        return Array.from(uniqueItems.values());
-    }, [playerStats.inventory, playerStats.equipment]);
+        return playerStats.inventory
+            .filter(item => item.type === ItemType.WEAPON || item.type === ItemType.ARMOR || item.type === ItemType.PET_ARMOR)
+            .sort((a,b) => (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0) || (a.enhancementLevel || 0) - (b.enhancementLevel || 0));
+    }, [playerStats.inventory]);
     
     const enhancablePets = useMemo(() => {
         return [...playerStats.pets].sort((a, b) => (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0));
@@ -1680,7 +1684,6 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
 
         setPlayerStats(prev => {
             let newInventory = [...prev.inventory];
-            let newEquipment = {...prev.equipment};
 
             // Deduct cost
             let newGold = prev.gold - enhancementCost.gold;
@@ -1690,34 +1693,26 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             });
             newInventory = newInventory.filter(i => i.quantity > 0);
 
-            const isEquipped = selectedEntity.isEquipped;
-
-            if (!isEquipped) {
-                const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
-                if (newInventory[itemIndex].quantity > 1) {
-                     newInventory[itemIndex].quantity--;
-                } else {
-                    newInventory.splice(itemIndex, 1);
-                }
+            // Remove one of the old items
+            const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
+            if (newInventory[itemIndex].quantity > 1) {
+                    newInventory[itemIndex].quantity--;
+            } else {
+                newInventory.splice(itemIndex, 1);
             }
 
+            // Add the new enhanced item
             const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1, quantity: 1 };
-            delete newEnhancedItem.isEquipped;
-
-            if (isEquipped) {
-                 if (newEnhancedItem.type === ItemType.WEAPON) newEquipment.weapon = newEnhancedItem;
-                 if (newEnhancedItem.type === ItemType.ARMOR) newEquipment.armor = newEnhancedItem;
+            
+            const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
+            if (existingStack) {
+                existingStack.quantity++;
             } else {
-                const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
-                if (existingStack) {
-                    existingStack.quantity++;
-                } else {
-                    newInventory.push(newEnhancedItem);
-                }
+                newInventory.push(newEnhancedItem);
             }
             
-            setSelectedEntity({...newEnhancedItem, isEquipped });
-            return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
+            setSelectedEntity(newEnhancedItem);
+            return { ...prev, gold: newGold, inventory: newInventory };
         });
         alert('강화에 성공했습니다!');
     };
@@ -1759,6 +1754,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 <button className={tab === 'item' ? 'active' : ''} onClick={() => { setTab('item'); setSelectedEntity(null); }}>장비 강화</button>
                 <button className={tab === 'pet' ? 'active' : ''} onClick={() => { setTab('pet'); setSelectedEntity(null); }}>펫 강화</button>
             </div>
+            <p>장착 중인 장비는 강화할 수 없습니다. 해제 후 시도해주세요.</p>
             <div className="blacksmith-container">
                 <div className="item-list-panel card">
                     <h3>강화할 대상 선택</h3>
@@ -1769,7 +1765,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                                 className={`list-item ${selectedEntity?.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
                                 onClick={() => setSelectedEntity(item)}
                             >
-                                <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} {item.isEquipped ? '[E]' : ''}</span>
+                                <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} (x{item.quantity})</span>
                             </div>
                         ))
                     ) : (
@@ -1791,7 +1787,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                              <div className="enhancement-stats">
                                 {tab === 'item' ? (<>
                                     {selectedEntity.type === ItemType.WEAPON && <p>공격력: {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>}
-                                    {selectedEntity.type === ItemType.ARMOR && <p>방어력: {selectedEntity.defense + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defense + (selectedEntity.enhancementLevel || 0) + 1}</p>}
+                                    {(selectedEntity.type === ItemType.ARMOR || selectedEntity.type === ItemType.PET_ARMOR) && <p>방어력: {selectedEntity.defense + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defense + (selectedEntity.enhancementLevel || 0) + 1}</p>}
                                 </>) : (<>
                                     <p>공격력 보너스: {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>
                                     <p>방어력 보너스: {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0) + 1}</p>
@@ -1969,7 +1965,13 @@ const GachaShrineView = ({ playerStats, setPlayerStats, setView }) => {
             else if (rand < 0.25) drawnItem = allPets.find(p => p.grade === ItemGrade.EPIC);
             else drawnItem = allPets[Math.floor(Math.random() * 2)]; // Two rare pets
             
-            setPlayerStats(prev => ({...prev, pets: [...prev.pets, {...drawnItem, id: Date.now() + Math.random()}]})); // Give unique id
+            const newPet = {
+                ...drawnItem,
+                id: Date.now() + Math.random(),
+                enhancementLevel: 0,
+                equipment: { armor: null }
+            };
+            setPlayerStats(prev => ({...prev, pets: [...prev.pets, newPet]}));
         } else { // item gacha
             const rand = Math.random();
             let gradeToDraw;
@@ -2108,6 +2110,11 @@ const TrophyRoadView = ({ playerStats, setPlayerStats, setView }) => {
 
 const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
     const [selectedPet, setSelectedPet] = useState(null);
+    const [showEquipModal, setShowEquipModal] = useState(false);
+
+    const availablePetArmors = useMemo(() => {
+        return playerStats.inventory.filter(i => i.type === ItemType.PET_ARMOR);
+    }, [playerStats.inventory]);
 
     const handleSetActivePet = () => {
         if (selectedPet) {
@@ -2140,8 +2147,97 @@ const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
         }
     };
 
+    const handleEquipPetArmor = (armorToEquip) => {
+        if (!selectedPet) return;
+
+        setPlayerStats(prev => {
+            const currentlyEquipped = selectedPet.equipment?.armor;
+            let newInventory = [...prev.inventory];
+
+            // Remove new armor from inventory
+            const inventoryItemIndex = newInventory.findIndex(i => i.id === armorToEquip.id && (i.enhancementLevel || 0) === (armorToEquip.enhancementLevel || 0));
+            if (inventoryItemIndex !== -1) {
+                if (newInventory[inventoryItemIndex].quantity > 1) {
+                    newInventory[inventoryItemIndex].quantity--;
+                } else {
+                    newInventory.splice(inventoryItemIndex, 1);
+                }
+            }
+
+            // Add old armor back to inventory
+            if (currentlyEquipped) {
+                const existingStack = newInventory.find(i => i.id === currentlyEquipped.id && (i.enhancementLevel || 0) === (currentlyEquipped.enhancementLevel || 0));
+                if (existingStack) {
+                    existingStack.quantity++;
+                } else {
+                    newInventory.push({ ...currentlyEquipped, quantity: 1 });
+                }
+            }
+            
+            // Update pet
+            const newPets = prev.pets.map(p => {
+                if (p.id === selectedPet.id) {
+                    return { ...p, equipment: { armor: armorToEquip } };
+                }
+                return p;
+            });
+            
+            const updatedSelectedPet = newPets.find(p => p.id === selectedPet.id);
+            setSelectedPet(updatedSelectedPet);
+
+            return { ...prev, inventory: newInventory, pets: newPets };
+        });
+        
+        setShowEquipModal(false);
+    };
+
+    const handleUnequipPetArmor = () => {
+        if (!selectedPet || !selectedPet.equipment?.armor) return;
+        const armorToUnequip = selectedPet.equipment.armor;
+
+        setPlayerStats(prev => {
+            const newInventory = [...prev.inventory];
+            const existingStack = newInventory.find(i => i.id === armorToUnequip.id && (i.enhancementLevel || 0) === (armorToUnequip.enhancementLevel || 0));
+            if (existingStack) {
+                existingStack.quantity++;
+            } else {
+                newInventory.push({ ...armorToUnequip, quantity: 1 });
+            }
+
+            const newPets = prev.pets.map(p => {
+                if (p.id === selectedPet.id) {
+                    return { ...p, equipment: { armor: null } };
+                }
+                return p;
+            });
+
+            const updatedSelectedPet = newPets.find(p => p.id === selectedPet.id);
+            setSelectedPet(updatedSelectedPet);
+
+            return { ...prev, inventory: newInventory, pets: newPets };
+        });
+    };
+
     return (
         <div className="card">
+             {showEquipModal && selectedPet && (
+                <div className="modal-backdrop">
+                    <div className="modal-content card">
+                        <h3>{selectedPet.name}에게 장비 장착</h3>
+                        <div className="inventory-list">
+                            {availablePetArmors.length > 0 ? availablePetArmors.map(armor => (
+                                <div key={`${armor.id}-${armor.enhancementLevel || 0}`} className="inventory-item">
+                                    <span>
+                                        <strong className={ItemGradeInfo[armor.grade]?.class}>{getDisplayName(armor)}</strong> (방어력: {armor.defense + (armor.enhancementLevel || 0)})
+                                    </span>
+                                    <button onClick={() => handleEquipPetArmor(armor)}>장착</button>
+                                </div>
+                            )) : <p>장착할 수 있는 펫 방어구가 없습니다.</p>}
+                        </div>
+                        <button onClick={() => setShowEquipModal(false)}>닫기</button>
+                    </div>
+                </div>
+            )}
             <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
             <h2>반려동물 관리</h2>
             <div className="pet-management-view">
@@ -2163,18 +2259,25 @@ const PetManagementView = ({ playerStats, setPlayerStats, setView }) => {
                             <h3>{getDisplayName(selectedPet)} <span className={ItemGradeInfo[selectedPet.grade].class}>({ItemGradeInfo[selectedPet.grade].name})</span></h3>
                             <p>기본 공격력 보너스: +{selectedPet.attackBonus}</p>
                             <p>기본 방어력 보너스: +{selectedPet.defenseBonus}</p>
+                            <hr/>
                             <p><strong>총 공격력 보너스: +{(selectedPet.attackBonus || 0) + ((selectedPet.enhancementLevel || 0) * 2)}</strong></p>
-                            <p><strong>총 방어력 보너스: +{(selectedPet.defenseBonus || 0) + (selectedPet.enhancementLevel || 0)}</strong></p>
+                            <p><strong>총 방어력 보너스: +{(selectedPet.defenseBonus || 0) + (selectedPet.enhancementLevel || 0) + (selectedPet.equipment?.armor?.defense || 0) + (selectedPet.equipment?.armor?.enhancementLevel || 0)}</strong></p>
                             <h4>스킬: {selectedPet.skillName}</h4>
                             <p>{selectedPet.skillDescription}</p>
-                            {playerStats.activePetId === selectedPet.id ? (
-                                <button onClick={handleReleasePet}>휴식</button>
-                            ) : (
-                                <button onClick={handleSetActivePet}>활성화</button>
-                            )}
-                            <button onClick={() => handleSellPet(selectedPet)} style={{marginLeft: '10px', backgroundColor: '#c62828'}} disabled={playerStats.activePetId === selectedPet.id}>
-                                판매 ({selectedPet.sellPrice} G)
-                            </button>
+                            <h4>장비</h4>
+                            <p>펫 갑옷: <span className={selectedPet.equipment?.armor ? ItemGradeInfo[selectedPet.equipment.armor.grade].class : ''}>{getDisplayName(selectedPet.equipment?.armor)}</span></p>
+                            <div className="pet-actions">
+                                {playerStats.activePetId === selectedPet.id ? (
+                                    <button onClick={handleReleasePet}>휴식</button>
+                                ) : (
+                                    <button onClick={handleSetActivePet}>활성화</button>
+                                )}
+                                 <button onClick={() => setShowEquipModal(true)}>장비 교체</button>
+                                {selectedPet.equipment?.armor && <button onClick={handleUnequipPetArmor}>장비 해제</button>}
+                                <button onClick={() => handleSellPet(selectedPet)} style={{backgroundColor: '#c62828'}} disabled={playerStats.activePetId === selectedPet.id}>
+                                    판매 ({selectedPet.sellPrice} G)
+                                </button>
+                            </div>
                             {playerStats.activePetId === selectedPet.id && <small style={{display: 'block', marginTop: '5px'}}>활성화된 펫은 판매할 수 없습니다.</small>}
                         </>
                     ) : <p>펫을 선택하여 정보를 확인하세요.</p>}
@@ -2192,11 +2295,12 @@ const App = () => {
         try {
             if (savedGame) {
                 const loadedStats = JSON.parse(savedGame);
-                // Simple fix: ensure pets have unique IDs upon loading old save data
+                // Simple fix: ensure pets have unique IDs and equipment slots upon loading old save data
                 if (loadedStats.pets) {
                      loadedStats.pets = loadedStats.pets.map((pet, index) => ({
                         ...pet,
-                        id: pet.id && pet.id > 100 ? pet.id : Date.now() + index 
+                        id: pet.id && pet.id > 100 ? pet.id : Date.now() + index,
+                        equipment: pet.equipment || { armor: null }
                     }));
                 }
                 // Merge saved data with initial data to ensure new properties are present
