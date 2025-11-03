@@ -35,6 +35,7 @@ const ItemGrade = {
     LEGENDARY: 'LEGENDARY',
     MYTHIC: 'MYTHIC',
     SECRET: 'SECRET',
+    ULTIMATE: 'ULTIMATE',
 };
 
 const ItemGradeInfo = {
@@ -45,6 +46,7 @@ const ItemGradeInfo = {
     [ItemGrade.LEGENDARY]: { name: '전설', color: '#ff8000', class: 'grade-legendary', order: 5 },
     [ItemGrade.MYTHIC]: { name: '신화', color: '#00ffff', class: 'grade-mythic', order: 6 },
     [ItemGrade.SECRET]: { name: '시크릿', color: '#ff00ff', class: 'grade-secret', order: 7 },
+    [ItemGrade.ULTIMATE]: { name: '궁극', color: '#ff0000', class: 'grade-ultimate', order: 8 },
 };
 
 const PlayerClasses = {
@@ -169,6 +171,11 @@ const allItems = [
     { id: 87, type: ItemType.PET_ARMOR, name: '가죽 펫 갑옷', price: 150, grade: ItemGrade.COMMON, defense: 3, description: '반려동물을 위한 기본적인 가죽 갑옷.' },
     { id: 88, type: ItemType.PET_ARMOR, name: '강철 펫 흉갑', price: 500, grade: ItemGrade.UNCOMMON, defense: 8, description: '튼튼한 강철로 만들어진 펫 흉갑.' },
     { id: 89, type: ItemType.PET_ARMOR, name: '미스릴 펫 체인', price: 2000, grade: ItemGrade.RARE, defense: 15, description: '가볍고 견고한 미스릴 펫 갑옷.' },
+    // --- 궁극 등급 아이템 ---
+    { id: 90, type: ItemType.WEAPON, name: '오메가 블레이드', price: 4500000, grade: ItemGrade.ULTIMATE, damage: 380, accuracy: 1.2, critChance: 0.5, critDamageMultiplier: 4.5, procChance: 0.6, procDamage: 250, description: '존재의 법칙을 초월한 검. 모든 것을 무로 되돌립니다. 60% 확률로 절대적인 힘을 방출합니다.' },
+    { id: 91, type: ItemType.WEAPON, name: '싱귤래리티 캐논', price: 5000000, grade: ItemGrade.ULTIMATE, weaponType: 'Gun', damage: 400, accuracy: 1.0, description: '블랙홀의 힘을 응축하여 발사하는 총. 그 무엇도 피할 수 없습니다.' },
+    { id: 92, type: ItemType.WEAPON, name: '별의 종언', price: 4800000, grade: ItemGrade.ULTIMATE, weaponType: 'Bow', damage: 350, accuracy: 1.8, critChance: 0.8, critDamageMultiplier: 6.0, description: '별들의 마지막 빛으로 만든 활. 화살은 시공간을 꿰뚫습니다.' },
+    { id: 93, type: ItemType.ARMOR, name: '시공간의 갑주', price: 3800000, grade: ItemGrade.ULTIMATE, defense: 300, description: '시간과 공간의 경계에서 벼려낸 갑옷. 모든 물리 법칙을 무시합니다.' },
 ];
 
 const allMaterials = [
@@ -1631,7 +1638,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const getItemEnhancementCost = (item) => {
         if (!item) return { gold: 0, materials: [] };
         const level = item.enhancementLevel || 0;
-        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20 };
+        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20, ULTIMATE: 40 };
         
         const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * (gradeMultiplier[item.grade] || 1));
         
