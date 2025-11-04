@@ -63,6 +63,13 @@ const UltimateSkills = {
     Magician: { name: '메테오', description: '거대한 운석을 떨어트려 적에게 400%의 막대한 피해를 입힙니다.' }
 };
 
+const PlayerSkills = {
+    Adventurer: { name: '응급치료', description: '최대 HP의 15%를 회복합니다.' },
+    Warrior: { name: '방패 올리기', description: '적에게 80%의 피해를 입히고 2턴간 자신의 방어력을 50% 증가시킵니다.' },
+    Archer: { name: '속사', description: '적에게 60%의 피해를 주는 공격을 두 번 합니다.' },
+    Magician: { name: '마나 번', description: '적에게 120%의 피해를 입히고 2턴간 적의 공격력을 20% 감소시킵니다.' }
+};
+
 const PET_GACHA_COST = 500;
 const ITEM_GACHA_COST = 300;
 
@@ -747,6 +754,9 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
     const [enemyAttacking, setEnemyAttacking] = useState(false);
     const [ultimateCharge, setUltimateCharge] = useState(0);
     const [showInventory, setShowInventory] = useState(false);
+    const [skillCooldown, setSkillCooldown] = useState(0);
+    // Fix: Provide a type for playerStatusEffects to resolve TypeScript errors.
+    const [playerStatusEffects, setPlayerStatusEffects] = useState<{ [key: string]: { duration: number; amount: number; } }>({});
     
     const addDamagePopup = useCallback((amount, isCrit, target) => {
         const id = Date.now() + Math.random();
@@ -793,8 +803,12 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
                 }
             }
         }
-        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
-    }, [playerStats]);
+        let finalDefense = playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
+        if (playerStatusEffects.defenseUp) {
+            finalDefense *= (1 + playerStatusEffects.defenseUp.amount);
+        }
+        return Math.round(finalDefense);
+    }, [playerStats, playerStatusEffects]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
 
@@ -850,6 +864,9 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
 
     const handleBattleEnd = useCallback((win) => {
         setIsBattleOver(true);
+        setSkillCooldown(0);
+        setPlayerStatusEffects({});
+
         if (win && monster) {
             const goldEarned = monster.gold;
             const xpEarned = monster.xp;
@@ -943,7 +960,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
 
         if (monster.statusEffects?.stun && monster.statusEffects.stun > 0) {
             addLog(`${monster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
-            setMonster(prev => ({...prev, statusEffects: { stun: prev.statusEffects.stun - 1 }}));
+            setMonster(prev => ({...prev, statusEffects: { ...prev.statusEffects, stun: prev.statusEffects.stun - 1 }}));
             setIsPlayerTurn(true);
             return;
         }
@@ -951,7 +968,12 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         setEnemyAttacking(true);
         setTimeout(() => setEnemyAttacking(false), 400);
 
-        let damage = calculateDamage(monster.attack, totalDefense);
+        let monsterAttack = monster.attack;
+        if (monster.statusEffects?.attackDown) {
+            monsterAttack *= (1 - monster.statusEffects.attackDown.amount);
+        }
+        let damage = calculateDamage(Math.round(monsterAttack), totalDefense);
+
         addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
         addDamagePopup(String(damage), false, 'player');
         const newPlayerHp = playerStats.hp - damage;
@@ -963,6 +985,43 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         }
     }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handleBattleEnd, setPlayerStats]);
 
+    useEffect(() => {
+        if (isPlayerTurn && !isBattleOver) {
+            setSkillCooldown(prev => Math.max(0, prev - 1));
+
+            setPlayerStatusEffects(prevEffects => {
+                const newEffects = { ...prevEffects };
+                let changed = false;
+                Object.keys(newEffects).forEach(key => {
+                    newEffects[key].duration--;
+                    if (newEffects[key].duration <= 0) {
+                        delete newEffects[key];
+                        changed = true;
+                        addLog(`플레이어의 ${key === 'defenseUp' ? '방어력 증가' : ''} 효과가 사라졌습니다.`, 'system-message');
+                    }
+                });
+                return changed ? newEffects : prevEffects;
+            });
+
+            setMonster(prevMonster => {
+                if (!prevMonster?.statusEffects) return prevMonster;
+
+                const newMonsterEffects = { ...prevMonster.statusEffects };
+                let changed = false;
+                Object.keys(newMonsterEffects).forEach(key => {
+                     if (key !== 'stun' && newMonsterEffects[key].duration) {
+                        newMonsterEffects[key].duration--;
+                        if (newMonsterEffects[key].duration <= 0) {
+                            delete newMonsterEffects[key];
+                            changed = true;
+                            addLog(`${prevMonster.name}의 ${key === 'attackDown' ? '공격력 감소' : ''} 효과가 사라졌습니다.`, 'system-message');
+                        }
+                    }
+                });
+                return changed ? { ...prevMonster, statusEffects: newMonsterEffects } : prevMonster;
+            });
+        }
+    }, [isPlayerTurn, isBattleOver, addLog]);
 
     const handlePlayerAttack = () => {
         if (!isPlayerTurn || isBattleOver || !monster) return;
@@ -1059,6 +1118,81 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         }
     };
 
+    const handleUseSkill = () => {
+        if (!isPlayerTurn || isBattleOver || !monster || skillCooldown > 0) return;
+
+        const playerClass = playerStats.playerClass || 'Adventurer';
+        const skill = PlayerSkills[playerClass];
+        addLog(`${playerStats.playerName}의 스킬 '${skill.name}'!`, 'player-turn');
+        setSkillCooldown(4); 
+
+        switch (playerClass) {
+            case 'Adventurer': {
+                const healAmount = Math.floor(playerStats.maxHp * 0.15);
+                setPlayerStats(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmount) }));
+                addLog(`HP를 ${healAmount} 회복했습니다.`, 'effect-message');
+                break;
+            }
+            case 'Warrior': {
+                const damage = calculateDamage(Math.floor(totalAttack * 0.8), monster.defense);
+                const newMonsterHp = monster.hp - damage;
+                addLog(`${monster.name}에게 ${damage}의 피해를 입혔습니다.`, 'player-turn');
+                addDamagePopup(String(damage), false, 'enemy');
+                setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+                
+                setPlayerStatusEffects(prev => ({ ...prev, defenseUp: { duration: 3, amount: 0.5 } })); // 3 turns duration because it ticks down at start of turn
+                addLog(`2턴 동안 방어력이 50% 증가합니다.`, 'effect-message');
+
+                if (newMonsterHp <= 0) {
+                    handleBattleEnd(true);
+                    return;
+                }
+                break;
+            }
+            case 'Archer': {
+                const damagePerShot = calculateDamage(Math.floor(totalAttack * 0.6), monster.defense);
+                addLog(`첫 번째 공격! ${monster.name}에게 ${damagePerShot}의 피해!`, 'player-turn');
+                addDamagePopup(String(damagePerShot), false, 'enemy');
+                
+                let newMonsterHp = monster.hp - damagePerShot;
+                
+                if (newMonsterHp > 0) {
+                    setTimeout(() => {
+                        addLog(`두 번째 공격! ${monster.name}에게 ${damagePerShot}의 피해!`, 'player-turn');
+                        addDamagePopup(String(damagePerShot), false, 'enemy');
+                        const finalMonsterHp = newMonsterHp - damagePerShot;
+                        setMonster(prev => ({ ...prev, hp: finalMonsterHp }));
+                        if (finalMonsterHp <= 0) handleBattleEnd(true);
+                    }, 300);
+                }
+                
+                setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+                if (newMonsterHp <= 0) {
+                     handleBattleEnd(true);
+                     return;
+                }
+                break;
+            }
+            case 'Magician': {
+                const damage = calculateDamage(Math.floor(totalAttack * 1.2), monster.defense);
+                const newMonsterHp = monster.hp - damage;
+                addLog(`${monster.name}에게 ${damage}의 피해를 입혔습니다.`, 'player-turn');
+                addDamagePopup(String(damage), false, 'enemy');
+
+                setMonster(prev => ({ ...prev, hp: newMonsterHp, statusEffects: { ...(prev.statusEffects || {}), attackDown: { duration: 3, amount: 0.2 } } }));
+                addLog(`2턴 동안 ${monster.name}의 공격력이 20% 감소합니다.`, 'effect-message');
+
+                if (newMonsterHp <= 0) {
+                    handleBattleEnd(true);
+                    return;
+                }
+                break;
+            }
+        }
+        
+        setIsPlayerTurn(false);
+    };
+
     const handleUseUltimate = () => {
         if (ultimateCharge < 5 || !isPlayerTurn || isBattleOver || !monster) return;
         
@@ -1071,7 +1205,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
             const stunApplied = Math.random() < 0.5;
             if (stunApplied) {
-                setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
+                setMonster(prev => ({...prev, statusEffects: { ...prev.statusEffects, stun: 1 }}));
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입히고 기절시켰다!`;
             } else {
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
@@ -1161,6 +1295,9 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
                 ) : (
                     <div className="battle-actions">
                         <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
+                        <button onClick={handleUseSkill} disabled={!isPlayerTurn || skillCooldown > 0}>
+                           {skillCooldown > 0 ? `스킬 (${skillCooldown}턴)` : (PlayerSkills[playerStats.playerClass || 'Adventurer']?.name || '스킬')}
+                        </button>
                         <button onClick={() => setShowInventory(true)} disabled={!isPlayerTurn}>아이템</button>
                         <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">
                             궁극기 ({ultimateCharge}/5)
@@ -1239,6 +1376,9 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
     const [enemyAttacking, setEnemyAttacking] = useState(false);
     const [ultimateCharge, setUltimateCharge] = useState(0);
     const [showInventory, setShowInventory] = useState(false);
+    const [skillCooldown, setSkillCooldown] = useState(0);
+    // Fix: Provide a type for playerStatusEffects to resolve TypeScript errors.
+    const [playerStatusEffects, setPlayerStatusEffects] = useState<{ [key: string]: { duration: number; amount: number; } }>({});
     
     const addDamagePopup = useCallback((amount, isCrit, target) => {
         const id = Date.now() + Math.random();
@@ -1284,8 +1424,12 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             }
         }
 
-        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
-    }, [playerStats]);
+        let finalDefense = playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
+        if (playerStatusEffects.defenseUp) {
+            finalDefense *= (1 + playerStatusEffects.defenseUp.amount);
+        }
+        return Math.round(finalDefense);
+    }, [playerStats, playerStatusEffects]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
 
@@ -1302,6 +1446,44 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         setBattleLog([]);
         addLog(`스테이지 ${currentStage}: ${newMonster.name}이(가) 나타났다!`, 'system-message');
     }, [dungeon, currentStage, addLog]);
+    
+    useEffect(() => {
+        if (isPlayerTurn && playerStats.hp > 0) {
+            setSkillCooldown(prev => Math.max(0, prev - 1));
+
+            setPlayerStatusEffects(prevEffects => {
+                const newEffects = { ...prevEffects };
+                let changed = false;
+                Object.keys(newEffects).forEach(key => {
+                    newEffects[key].duration--;
+                    if (newEffects[key].duration <= 0) {
+                        delete newEffects[key];
+                        changed = true;
+                        addLog(`플레이어의 ${key === 'defenseUp' ? '방어력 증가' : ''} 효과가 사라졌습니다.`, 'system-message');
+                    }
+                });
+                return changed ? newEffects : prevEffects;
+            });
+
+            setMonster(prevMonster => {
+                if (!prevMonster?.statusEffects) return prevMonster;
+
+                const newMonsterEffects = { ...prevMonster.statusEffects };
+                let changed = false;
+                Object.keys(newMonsterEffects).forEach(key => {
+                     if (key !== 'stun' && newMonsterEffects[key].duration) {
+                        newMonsterEffects[key].duration--;
+                        if (newMonsterEffects[key].duration <= 0) {
+                            delete newMonsterEffects[key];
+                            changed = true;
+                            addLog(`${prevMonster.name}의 ${key === 'attackDown' ? '공격력 감소' : ''} 효과가 사라졌습니다.`, 'system-message');
+                        }
+                    }
+                });
+                return changed ? { ...prevMonster, statusEffects: newMonsterEffects } : prevMonster;
+            });
+        }
+    }, [isPlayerTurn, addLog, playerStats.hp]);
 
     const handleMonsterDefeated = useCallback(() => {
         if (!monster) return;
@@ -1409,7 +1591,11 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         setEnemyAttacking(true);
         setTimeout(() => setEnemyAttacking(false), 400);
 
-        const damage = calculateDamage(monster.attack, totalDefense);
+        let monsterAttack = monster.attack;
+        if (monster.statusEffects?.attackDown) {
+            monsterAttack *= (1 - monster.statusEffects.attackDown.amount);
+        }
+        const damage = calculateDamage(Math.round(monsterAttack), totalDefense);
         addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
         addDamagePopup(String(damage), false, 'player');
         
@@ -1510,6 +1696,89 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         setIsPlayerTurn(false);
     };
 
+     const handleUseSkill = () => {
+        if (!isPlayerTurn || !monster || skillCooldown > 0 || playerStats.hp <= 0) return;
+
+        const playerClass = playerStats.playerClass || 'Adventurer';
+        const skill = PlayerSkills[playerClass];
+        addLog(`${playerStats.playerName}의 스킬 '${skill.name}'!`, 'player-turn');
+        setSkillCooldown(4);
+
+        switch (playerClass) {
+            case 'Adventurer': {
+                const healAmount = Math.floor(playerStats.maxHp * 0.15);
+                setPlayerStats(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmount) }));
+                addLog(`HP를 ${healAmount} 회복했습니다.`, 'effect-message');
+                break;
+            }
+            case 'Warrior': {
+                const damage = calculateDamage(Math.floor(totalAttack * 0.8), monster.defense);
+                const newMonsterHp = monster.hp - damage;
+                addLog(`${monster.name}에게 ${damage}의 피해를 입혔습니다.`, 'player-turn');
+                addDamagePopup(String(damage), false, 'enemy');
+                
+                setPlayerStatusEffects(prev => ({ ...prev, defenseUp: { duration: 3, amount: 0.5 } }));
+                addLog(`2턴 동안 방어력이 50% 증가합니다.`, 'effect-message');
+
+                if (newMonsterHp <= 0) {
+                    setMonster(prev => ({ ...prev, hp: 0 }));
+                    handleMonsterDefeated();
+                    return;
+                }
+                setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+                break;
+            }
+            case 'Archer': {
+                const damagePerShot = calculateDamage(Math.floor(totalAttack * 0.6), monster.defense);
+                addLog(`첫 번째 공격! ${monster.name}에게 ${damagePerShot}의 피해!`, 'player-turn');
+                addDamagePopup(String(damagePerShot), false, 'enemy');
+                
+                let newMonsterHp = monster.hp - damagePerShot;
+
+                if (newMonsterHp > 0) {
+                    setTimeout(() => {
+                        addLog(`두 번째 공격! ${monster.name}에게 ${damagePerShot}의 피해!`, 'player-turn');
+                        addDamagePopup(String(damagePerShot), false, 'enemy');
+                        const finalMonsterHp = newMonsterHp - damagePerShot;
+                        if (finalMonsterHp <= 0) {
+                            setMonster(prev => ({ ...prev, hp: 0 }));
+                            handleMonsterDefeated();
+                        } else {
+                            setMonster(prev => ({ ...prev, hp: finalMonsterHp }));
+                        }
+                    }, 300);
+                }
+                
+                if (newMonsterHp <= 0) {
+                    setMonster(prev => ({ ...prev, hp: 0 }));
+                    handleMonsterDefeated();
+                    return;
+                }
+                setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+                break;
+            }
+            case 'Magician': {
+                const damage = calculateDamage(Math.floor(totalAttack * 1.2), monster.defense);
+                const newMonsterHp = monster.hp - damage;
+                addLog(`${monster.name}에게 ${damage}의 피해를 입혔습니다.`, 'player-turn');
+                addDamagePopup(String(damage), false, 'enemy');
+
+                setMonster(prev => ({ ...prev, hp: newMonsterHp, statusEffects: { ...(prev.statusEffects || {}), attackDown: { duration: 3, amount: 0.2 } } }));
+                addLog(`2턴 동안 ${monster.name}의 공격력이 20% 감소합니다.`, 'effect-message');
+
+                if (newMonsterHp <= 0) {
+                    setMonster(prev => ({ ...prev, hp: 0 }));
+                    handleMonsterDefeated();
+                    return;
+                }
+                 setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+                break;
+            }
+        }
+        
+        setIsPlayerTurn(false);
+    };
+
     const handleUseUltimate = () => {
         if (ultimateCharge < 5 || !isPlayerTurn || !monster) return;
         
@@ -1522,7 +1791,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
             const stunApplied = Math.random() < 0.5;
             if (stunApplied) {
-                setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
+                setMonster(prev => ({...prev, statusEffects: { ...prev.statusEffects, stun: 1 }}));
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입히고 기절시켰다!`;
             } else {
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
@@ -1604,6 +1873,9 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
                 ) : (
                      <div className="battle-actions">
                         <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
+                         <button onClick={handleUseSkill} disabled={!isPlayerTurn || skillCooldown > 0}>
+                           {skillCooldown > 0 ? `스킬 (${skillCooldown}턴)` : (PlayerSkills[playerStats.playerClass || 'Adventurer']?.name || '스킬')}
+                        </button>
                         <button onClick={() => setShowInventory(true)} disabled={!isPlayerTurn}>아이템</button>
                         <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">궁극기 ({ultimateCharge}/5)</button>
                     </div>
