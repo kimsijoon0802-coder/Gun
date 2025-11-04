@@ -1647,10 +1647,19 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const [selectedEntity, setSelectedEntity] = useState(null);
 
     const enhancableItems = useMemo(() => {
-        return playerStats.inventory
+        const items = playerStats.inventory
             .filter(item => item.type === ItemType.WEAPON || item.type === ItemType.ARMOR || item.type === ItemType.PET_ARMOR)
-            .sort((a,b) => (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0) || (a.enhancementLevel || 0) - (b.enhancementLevel || 0));
-    }, [playerStats.inventory]);
+            .map(item => ({ ...item, isEquipped: false }));
+
+        if (playerStats.equipment.weapon) {
+            items.push({ ...playerStats.equipment.weapon, isEquipped: true, quantity: 1 });
+        }
+        if (playerStats.equipment.armor) {
+            items.push({ ...playerStats.equipment.armor, isEquipped: true, quantity: 1 });
+        }
+
+        return items.sort((a,b) => (b.isEquipped ? 1 : 0) - (a.isEquipped ? 1 : 0) || (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0) || (b.enhancementLevel || 0) - (a.enhancementLevel || 0));
+    }, [playerStats.inventory, playerStats.equipment]);
     
     const enhancablePets = useMemo(() => {
         return [...playerStats.pets].sort((a, b) => (ItemGradeInfo[b.grade]?.order || 0) - (ItemGradeInfo[a.grade]?.order || 0));
@@ -1709,48 +1718,70 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             alert('재료 또는 골드가 부족합니다.');
             return;
         }
-
+    
         const successChance = getEnhancementSuccessChance(selectedEntity, 'item');
         const success = Math.random() < successChance;
-
+    
         setPlayerStats(prev => {
             let newInventory = [...prev.inventory];
+            let newEquipment = { ...prev.equipment };
             let newGold = prev.gold - enhancementCost.gold;
-
+    
+            // Consume materials
             enhancementCost.materials.forEach(mat => {
                 const matIndex = newInventory.findIndex(i => i.id === mat.materialId);
-                newInventory[matIndex].quantity -= mat.quantity;
+                if (matIndex !== -1) newInventory[matIndex].quantity -= mat.quantity;
             });
             newInventory = newInventory.filter(i => i.quantity > 0);
-
-            const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
-            if (itemIndex > -1) {
-                if (newInventory[itemIndex].quantity > 1) {
-                    newInventory[itemIndex].quantity--;
-                } else {
-                    newInventory.splice(itemIndex, 1);
+            
+            // Consume the item being enhanced
+            if (selectedEntity.isEquipped) {
+                if (selectedEntity.type === ItemType.WEAPON) {
+                    newEquipment.weapon = null;
+                } else if (selectedEntity.type === ItemType.ARMOR) {
+                    newEquipment.armor = null;
+                }
+            } else {
+                const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
+                if (itemIndex > -1) {
+                    if (newInventory[itemIndex].quantity > 1) {
+                        newInventory[itemIndex].quantity--;
+                    } else {
+                        newInventory.splice(itemIndex, 1);
+                    }
                 }
             }
-
+    
             if (success) {
                 const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1, quantity: 1 };
-                const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
-                if (existingStack) {
-                    existingStack.quantity++;
+                delete newEnhancedItem.isEquipped;
+    
+                if (selectedEntity.isEquipped) {
+                     if (newEnhancedItem.type === ItemType.WEAPON) {
+                        newEquipment.weapon = newEnhancedItem;
+                    } else if (newEnhancedItem.type === ItemType.ARMOR) {
+                        newEquipment.armor = newEnhancedItem;
+                    }
                 } else {
-                    newInventory.push(newEnhancedItem);
+                    const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
+                    if (existingStack) {
+                        existingStack.quantity++;
+                    } else {
+                        newInventory.push(newEnhancedItem);
+                    }
                 }
             }
-            return { ...prev, gold: newGold, inventory: newInventory };
+            return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
         });
-
+    
         if (success) {
+            // Update selectedEntity to reflect new state for the UI
             const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1 };
             setSelectedEntity(newEnhancedItem);
             alert('강화에 성공했습니다!');
         } else {
             setSelectedEntity(null);
-            alert('강화에 실패했습니다...');
+            alert('강화에 실패하여 아이템이 파괴되었습니다...');
         }
     };
     
@@ -1801,18 +1832,20 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 <button className={tab === 'item' ? 'active' : ''} onClick={() => { setTab('item'); setSelectedEntity(null); }}>장비 강화</button>
                 <button className={tab === 'pet' ? 'active' : ''} onClick={() => { setTab('pet'); setSelectedEntity(null); }}>펫 강화</button>
             </div>
-            <p>장착 중인 장비는 강화할 수 없습니다. 해제 후 시도해주세요.</p>
             <div className="blacksmith-container">
                 <div className="item-list-panel card">
                     <h3>강화할 대상 선택</h3>
                     {tab === 'item' ? (
-                        enhancableItems.map(item => (
+                        enhancableItems.map((item, index) => (
                             <div 
-                                key={`${item.id}-${item.enhancementLevel||0}`} 
-                                className={`list-item ${selectedEntity?.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
+                                key={`${item.id}-${item.enhancementLevel||0}-${item.isEquipped}-${index}`} 
+                                className={`list-item ${selectedEntity && selectedEntity.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) && selectedEntity.isEquipped === item.isEquipped ? 'selected' : ''}`}
                                 onClick={() => setSelectedEntity(item)}
                             >
-                                <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} (x{item.quantity})</span>
+                                <span className={ItemGradeInfo[item.grade]?.class}>
+                                    {item.isEquipped ? '[장착중] ' : ''}
+                                    {getDisplayName(item)} (x{item.quantity})
+                                </span>
                             </div>
                         ))
                     ) : (
