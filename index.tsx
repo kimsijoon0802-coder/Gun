@@ -56,6 +56,13 @@ const PlayerClasses = {
     Magician: { name: '마법사', description: '마력을 다루어 강력한 원소 공격을 합니다. (공격력 +7, 최대 HP -10)', bonuses: { attack: 7, maxHp: -10, defense: 0 } },
 };
 
+const JobSkills = {
+    Adventurer: { name: '격려의 일격', description: '적에게 150%의 피해를 입힙니다.', cooldown: 3 },
+    Warrior: { name: '철벽 방패', description: '2턴 동안 자신의 방어력을 50% 증가시킵니다.', cooldown: 3 },
+    Archer: { name: '속사', description: '70%의 피해로 두 번 빠르게 공격합니다.', cooldown: 3 },
+    Magician: { name: '화염구', description: '200%의 마법 피해를 입히고 30% 확률로 2턴 동안 화상 피해를 입힙니다.', cooldown: 3 }
+};
+
 const UltimateSkills = {
     Adventurer: { name: '파워 스트라이크', description: '적에게 250%의 피해를 입힙니다.' },
     Warrior: { name: '분쇄의 일격', description: '적에게 300%의 피해를 입히고 50% 확률로 1턴 동안 기절시킵니다.' },
@@ -362,12 +369,12 @@ const getEnhancementSuccessChance = (entity, type) => {
     const level = entity.enhancementLevel || 0;
     const maxLevel = 14;
 
+    if (level >= 15) return 0; // Max level reached
+
     if (type === 'item') {
-        const chance = level > maxLevel ? itemEnhancementChances[maxLevel] : itemEnhancementChances[level];
-        return chance;
+        return itemEnhancementChances[level];
     } else if (type === 'pet') {
-        const chance = level > maxLevel ? petEnhancementChances[maxLevel] : petEnhancementChances[level];
-        return chance;
+        return petEnhancementChances[level];
     }
     return 0;
 };
@@ -747,6 +754,9 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
     const [enemyAttacking, setEnemyAttacking] = useState(false);
     const [ultimateCharge, setUltimateCharge] = useState(0);
     const [showInventory, setShowInventory] = useState(false);
+    const [skillCooldown, setSkillCooldown] = useState(0);
+    // FIX: Defined type for playerStatusEffects to avoid type errors.
+    const [playerStatusEffects, setPlayerStatusEffects] = useState<{defenseBoost?: {duration: number, multiplier: number}}>({});
     
     const addDamagePopup = useCallback((amount, isCrit, target) => {
         const id = Date.now() + Math.random();
@@ -760,6 +770,24 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
       const className = petSkill ? 'pet-skill-message' : type;
       setBattleLog(prev => [...prev, <p key={prev.length} className={className}>{message}</p>]);
     }, []);
+    
+    const endPlayerTurn = useCallback(() => {
+        setSkillCooldown(prev => Math.min(3, prev + 1));
+        const newEffects = { ...playerStatusEffects };
+        let effectsUpdated = false;
+        if (newEffects.defenseBoost && newEffects.defenseBoost.duration > 0) {
+            newEffects.defenseBoost.duration--;
+            if (newEffects.defenseBoost.duration === 0) {
+                delete newEffects.defenseBoost;
+                addLog('철벽 방패 효과가 사라졌습니다.', 'system-message');
+            }
+            effectsUpdated = true;
+        }
+        if (effectsUpdated) {
+            setPlayerStatusEffects(newEffects);
+        }
+        setIsPlayerTurn(false);
+    }, [playerStatusEffects, addLog]);
 
     const totalAttack = useMemo(() => {
         const weapon = playerStats.equipment.weapon;
@@ -793,8 +821,12 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
                 }
             }
         }
-        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
-    }, [playerStats]);
+        let finalDefense = playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
+        if (playerStatusEffects.defenseBoost) {
+            finalDefense *= playerStatusEffects.defenseBoost.multiplier;
+        }
+        return Math.round(finalDefense);
+    }, [playerStats, playerStatusEffects]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
 
@@ -941,9 +973,36 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
     const handleEnemyTurn = useCallback(() => {
         if (!monster || playerStats.hp <= 0) return;
 
-        if (monster.statusEffects?.stun && monster.statusEffects.stun > 0) {
-            addLog(`${monster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
-            setMonster(prev => ({...prev, statusEffects: { stun: prev.statusEffects.stun - 1 }}));
+        let currentMonster = { ...monster };
+        let monsterHp = currentMonster.hp;
+
+        // Handle status effects like burn at the start of the monster's turn
+        if (currentMonster.statusEffects?.burn && currentMonster.statusEffects.burn.duration > 0) {
+            const burnDamage = currentMonster.statusEffects.burn.damage;
+            addLog(`${currentMonster.name}이(가) 화상으로 ${burnDamage}의 피해를 입었다!`, 'enemy-turn');
+            addDamagePopup(String(burnDamage), false, 'enemy');
+            monsterHp -= burnDamage;
+            
+            const newBurnStatus = { ...currentMonster.statusEffects.burn, duration: currentMonster.statusEffects.burn.duration - 1 };
+            if (newBurnStatus.duration > 0) {
+                 currentMonster.statusEffects = { ...currentMonster.statusEffects, burn: newBurnStatus };
+            } else {
+                 addLog(`${currentMonster.name}의 화상 효과가 사라졌다.`, 'system-message');
+                 const newStatusEffects = {...currentMonster.statusEffects};
+                 delete newStatusEffects.burn;
+                 currentMonster.statusEffects = newStatusEffects;
+            }
+            
+            if (monsterHp <= 0) {
+                setMonster({ ...currentMonster, hp: 0 });
+                handleBattleEnd(true); // win
+                return;
+            }
+        }
+        
+        if (currentMonster.statusEffects?.stun && currentMonster.statusEffects.stun > 0) {
+            addLog(`${currentMonster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
+            setMonster(prev => ({...prev, hp: monsterHp, statusEffects: { ...prev.statusEffects, stun: prev.statusEffects.stun - 1 }}));
             setIsPlayerTurn(true);
             return;
         }
@@ -954,14 +1013,18 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         let damage = calculateDamage(monster.attack, totalDefense);
         addLog(`${monster.name}의 공격! ${playerStats.playerName}에게 ${damage}의 피해를 입혔다.`, 'enemy-turn');
         addDamagePopup(String(damage), false, 'player');
+        
         const newPlayerHp = playerStats.hp - damage;
         setPlayerStats(prev => ({ ...prev, hp: newPlayerHp }));
+        
+        setMonster(prev => ({...prev, ...currentMonster, hp: monsterHp}));
+
         if (newPlayerHp <= 0) {
             handleBattleEnd(false);
         } else {
             setIsPlayerTurn(true);
         }
-    }, [monster, playerStats, totalDefense, addLog, addDamagePopup, handleBattleEnd, setPlayerStats]);
+    }, [monster, playerStats.hp, playerStats.playerName, totalDefense, addLog, addDamagePopup, handleBattleEnd, setPlayerStats]);
 
 
     const handlePlayerAttack = () => {
@@ -1012,7 +1075,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         }
         
         setUltimateCharge(prev => Math.min(5, prev + 1));
-        setIsPlayerTurn(false);
+        endPlayerTurn();
     };
 
     const handleUsePotion = (itemToUse) => {
@@ -1032,7 +1095,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             
             setShowInventory(false);
             setUltimateCharge(prev => Math.min(5, prev + 1));
-            setIsPlayerTurn(false);
+            endPlayerTurn();
         } else if (itemToUse.effect?.type === 'damage_enemy') {
             const damage = itemToUse.effect.amount;
             addLog(`${playerStats.playerName}이(가) ${itemToUse.name}을(를) 던져 ${monster.name}에게 ${damage}의 피해를 입혔다!`, 'player-turn');
@@ -1054,10 +1117,77 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             if (newMonsterHp <= 0) {
                 handleBattleEnd(true);
             } else {
-                setIsPlayerTurn(false);
+                endPlayerTurn();
             }
         }
     };
+    
+    const handleUseJobSkill = () => {
+        if (skillCooldown < 3 || !isPlayerTurn || isBattleOver || !monster) return;
+        
+        const playerClass = playerStats.playerClass || 'Adventurer';
+        let damage = 0;
+        let logMessage = '';
+        let newMonsterHp = monster.hp;
+        let newMonsterStatusEffects = null;
+
+        setPlayerAttacking(true);
+        setTimeout(() => setPlayerAttacking(false), 400);
+
+        switch (playerClass) {
+            case 'Warrior':
+                setPlayerStatusEffects(prev => ({...prev, defenseBoost: { duration: 2, multiplier: 1.5 }}));
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Warrior.name}'! 2턴간 방어력이 50% 증가합니다!`;
+                addLog(logMessage, 'player-turn');
+                break;
+            case 'Archer':
+                let totalArcherDamage = 0;
+                for (let i = 0; i < 2; i++) {
+                    const hitDamage = calculateDamage(Math.floor(totalAttack * 0.7), monster.defense);
+                    totalArcherDamage += hitDamage;
+                    addDamagePopup(String(hitDamage), false, 'enemy');
+                }
+                newMonsterHp -= totalArcherDamage;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Archer.name}'! ${monster.name}에게 총 ${totalArcherDamage}의 피해를 입혔다!`;
+                addLog(logMessage, 'player-turn');
+                break;
+            case 'Magician':
+                damage = calculateDamage(Math.floor(totalAttack * 2.0), monster.defense);
+                newMonsterHp -= damage;
+                const burnApplied = Math.random() < 0.3;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Magician.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
+                addDamagePopup(String(damage), false, 'enemy');
+                if (burnApplied) {
+                    const burnDamage = Math.max(1, Math.floor(totalAttack * 0.2));
+                    newMonsterStatusEffects = { ...monster.statusEffects, burn: { duration: 2, damage: burnDamage } };
+                    logMessage += ` 2턴간 화상을 입힌다!`;
+                }
+                addLog(logMessage, 'player-turn');
+                break;
+            default: // Adventurer
+                damage = calculateDamage(Math.floor(totalAttack * 1.5), monster.defense);
+                newMonsterHp -= damage;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
+                addDamagePopup(String(damage), false, 'enemy');
+                addLog(logMessage, 'player-turn');
+                break;
+        }
+
+        if (newMonsterStatusEffects) {
+            setMonster(m => ({ ...m, hp: newMonsterHp, statusEffects: newMonsterStatusEffects }));
+        } else {
+            setMonster(m => ({ ...m, hp: newMonsterHp }));
+        }
+        
+        setSkillCooldown(0);
+
+        if (newMonsterHp <= 0) {
+            handleBattleEnd(true);
+        } else {
+            endPlayerTurn();
+        }
+    };
+
 
     const handleUseUltimate = () => {
         if (ultimateCharge < 5 || !isPlayerTurn || isBattleOver || !monster) return;
@@ -1071,7 +1201,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
             damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
             const stunApplied = Math.random() < 0.5;
             if (stunApplied) {
-                setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
+                setMonster(prev => ({...prev, statusEffects: { ...prev.statusEffects, stun: 1 }}));
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입히고 기절시켰다!`;
             } else {
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
@@ -1087,6 +1217,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         } else { // Adventurer
             damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
+            isCritUltimate = false;
         }
 
         addLog(logMessage, 'player-turn');
@@ -1100,7 +1231,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         if (newMonsterHp <= 0) {
             handleBattleEnd(true);
         } else {
-            setIsPlayerTurn(false);
+            endPlayerTurn();
         }
     };
 
@@ -1162,6 +1293,7 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
                     <div className="battle-actions">
                         <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
                         <button onClick={() => setShowInventory(true)} disabled={!isPlayerTurn}>아이템</button>
+                        <button onClick={handleUseJobSkill} disabled={!isPlayerTurn || skillCooldown < 3}>직업 기술 ({skillCooldown}/3)</button>
                         <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">
                             궁극기 ({ultimateCharge}/5)
                         </button>
@@ -1200,13 +1332,18 @@ const ClassSelectionView = ({ playerStats, setPlayerStats, setView }) => {
 
     if (playerStats.playerClass) {
         const currentClass = PlayerClasses[playerStats.playerClass];
+        const currentJobSkill = JobSkills[playerStats.playerClass];
         return (
             <div className="card">
                 <button onClick={() => setView(View.TOWN)}>마을로 돌아가기</button>
                 <h2>나의 직업</h2>
                 <h3>{currentClass.name}</h3>
                 <p>{currentClass.description}</p>
-                <p>당신은 이미 자신의 길을 걷고 있습니다. 다른 길을 원한다면 '직업 변경 메달리온'을 사용하세요.</p>
+                 <div className="card" style={{marginTop: '1rem'}}>
+                    <h4>직업 기술: {currentJobSkill.name}</h4>
+                    <p>{currentJobSkill.description}</p>
+                </div>
+                <p style={{marginTop: '1rem'}}>당신은 이미 자신의 길을 걷고 있습니다. 다른 길을 원한다면 '직업 변경 메달리온'을 사용하세요.</p>
             </div>
         );
     }
@@ -1221,7 +1358,11 @@ const ClassSelectionView = ({ playerStats, setPlayerStats, setView }) => {
                     <div key={key} className="card class-card">
                         <h3>{value.name}</h3>
                         <p>{value.description}</p>
-                        <button onClick={() => handleSelectClass(key)}>선택</button>
+                        <div className="card" style={{marginTop: '1rem', backgroundColor: 'rgba(0,0,0,0.2)'}}>
+                            <h4>직업 기술: {JobSkills[key].name}</h4>
+                            <p>{JobSkills[key].description}</p>
+                        </div>
+                        <button style={{marginTop: '1rem'}} onClick={() => handleSelectClass(key)}>선택</button>
                     </div>
                 ))}
             </div>
@@ -1239,6 +1380,9 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
     const [enemyAttacking, setEnemyAttacking] = useState(false);
     const [ultimateCharge, setUltimateCharge] = useState(0);
     const [showInventory, setShowInventory] = useState(false);
+    const [skillCooldown, setSkillCooldown] = useState(0);
+    // FIX: Defined type for playerStatusEffects to avoid type errors.
+    const [playerStatusEffects, setPlayerStatusEffects] = useState<{defenseBoost?: {duration: number, multiplier: number}}>({});
     
     const addDamagePopup = useCallback((amount, isCrit, target) => {
         const id = Date.now() + Math.random();
@@ -1250,6 +1394,24 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         const className = petSkill ? 'pet-skill-message' : type;
         setBattleLog(prev => [...prev, <p key={prev.length} className={className}>{message}</p>]);
     }, []);
+    
+     const endPlayerTurn = useCallback(() => {
+        setSkillCooldown(prev => Math.min(3, prev + 1));
+        const newEffects = { ...playerStatusEffects };
+        let effectsUpdated = false;
+        if (newEffects.defenseBoost && newEffects.defenseBoost.duration > 0) {
+            newEffects.defenseBoost.duration--;
+            if (newEffects.defenseBoost.duration === 0) {
+                delete newEffects.defenseBoost;
+                addLog('철벽 방패 효과가 사라졌습니다.', 'system-message');
+            }
+            effectsUpdated = true;
+        }
+        if (effectsUpdated) {
+            setPlayerStatusEffects(newEffects);
+        }
+        setIsPlayerTurn(false);
+    }, [playerStatusEffects, addLog]);
 
     const totalAttack = useMemo(() => {
         const weapon = playerStats.equipment.weapon;
@@ -1284,8 +1446,12 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             }
         }
 
-        return playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
-    }, [playerStats]);
+        let finalDefense = playerStats.defense + armorDefense + armorEnhancementBonus + petBonus;
+        if (playerStatusEffects.defenseBoost) {
+            finalDefense *= playerStatusEffects.defenseBoost.multiplier;
+        }
+        return Math.round(finalDefense);
+    }, [playerStats, playerStatusEffects]);
     
     const activePet = useMemo(() => playerStats.activePetId ? playerStats.pets.find(p => p.id === playerStats.activePetId) : null, [playerStats.activePetId, playerStats.pets]);
 
@@ -1406,6 +1572,41 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
 
     const handleEnemyTurn = useCallback(() => {
         if (!monster || playerStats.hp <= 0) return;
+        
+        let currentMonster = { ...monster };
+        let monsterHp = currentMonster.hp;
+
+        // Handle status effects like burn at the start of the monster's turn
+        if (currentMonster.statusEffects?.burn && currentMonster.statusEffects.burn.duration > 0) {
+            const burnDamage = currentMonster.statusEffects.burn.damage;
+            addLog(`${currentMonster.name}이(가) 화상으로 ${burnDamage}의 피해를 입었다!`, 'enemy-turn');
+            addDamagePopup(String(burnDamage), false, 'enemy');
+            monsterHp -= burnDamage;
+            
+            const newBurnStatus = { ...currentMonster.statusEffects.burn, duration: currentMonster.statusEffects.burn.duration - 1 };
+            if (newBurnStatus.duration > 0) {
+                 currentMonster.statusEffects = { ...currentMonster.statusEffects, burn: newBurnStatus };
+            } else {
+                 addLog(`${currentMonster.name}의 화상 효과가 사라졌다.`, 'system-message');
+                 const newStatusEffects = {...currentMonster.statusEffects};
+                 delete newStatusEffects.burn;
+                 currentMonster.statusEffects = newStatusEffects;
+            }
+            
+            if (monsterHp <= 0) {
+                setMonster({ ...currentMonster, hp: 0 });
+                handleMonsterDefeated();
+                return;
+            }
+        }
+        
+        if (currentMonster.statusEffects?.stun && currentMonster.statusEffects.stun > 0) {
+            addLog(`${currentMonster.name}이(가) 기절해서 움직일 수 없다!`, 'system-message');
+            setMonster(prev => ({...prev, hp: monsterHp, statusEffects: { ...prev.statusEffects, stun: prev.statusEffects.stun - 1 }}));
+            setIsPlayerTurn(true);
+            return;
+        }
+
         setEnemyAttacking(true);
         setTimeout(() => setEnemyAttacking(false), 400);
 
@@ -1415,13 +1616,15 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         
         const newPlayerHp = playerStats.hp - damage;
         setPlayerStats(prev => ({ ...prev, hp: newPlayerHp }));
+        
+        setMonster(prev => ({...prev, ...currentMonster, hp: monsterHp}));
 
         if (newPlayerHp <= 0) {
             handleBattleFailed();
         } else {
             setIsPlayerTurn(true);
         }
-    }, [monster, playerStats.hp, playerStats.playerName, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats]);
+    }, [monster, playerStats.hp, playerStats.playerName, totalDefense, addLog, addDamagePopup, handleBattleFailed, setPlayerStats, handleMonsterDefeated]);
 
     const handlePlayerAttack = () => {
         if (!isPlayerTurn || !monster) return;
@@ -1469,7 +1672,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             setMonster({ ...monster, hp: newMonsterHp });
         }
         setUltimateCharge(prev => Math.min(5, prev + 1));
-        setIsPlayerTurn(false);
+        endPlayerTurn();
     };
     
     const handleUsePotion = (itemToUse) => {
@@ -1507,8 +1710,76 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             setMonster({ ...monster, hp: newMonsterHp });
         }
         setUltimateCharge(prev => Math.min(5, prev + 1));
-        setIsPlayerTurn(false);
+        endPlayerTurn();
     };
+    
+    const handleUseJobSkill = () => {
+        if (skillCooldown < 3 || !isPlayerTurn || !monster) return;
+        
+        const playerClass = playerStats.playerClass || 'Adventurer';
+        let damage = 0;
+        let logMessage = '';
+        let newMonsterHp = monster.hp;
+        let newMonsterStatusEffects = null;
+
+        setPlayerAttacking(true);
+        setTimeout(() => setPlayerAttacking(false), 400);
+
+        switch (playerClass) {
+            case 'Warrior':
+                setPlayerStatusEffects(prev => ({...prev, defenseBoost: { duration: 2, multiplier: 1.5 }}));
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Warrior.name}'! 2턴간 방어력이 50% 증가합니다!`;
+                addLog(logMessage, 'player-turn');
+                break;
+            case 'Archer':
+                let totalArcherDamage = 0;
+                for (let i = 0; i < 2; i++) {
+                    const hitDamage = calculateDamage(Math.floor(totalAttack * 0.7), monster.defense);
+                    totalArcherDamage += hitDamage;
+                    addDamagePopup(String(hitDamage), false, 'enemy');
+                }
+                newMonsterHp -= totalArcherDamage;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Archer.name}'! ${monster.name}에게 총 ${totalArcherDamage}의 피해를 입혔다!`;
+                addLog(logMessage, 'player-turn');
+                break;
+            case 'Magician':
+                damage = calculateDamage(Math.floor(totalAttack * 2.0), monster.defense);
+                newMonsterHp -= damage;
+                const burnApplied = Math.random() < 0.3;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Magician.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
+                addDamagePopup(String(damage), false, 'enemy');
+                if (burnApplied) {
+                    const burnDamage = Math.max(1, Math.floor(totalAttack * 0.2));
+                    newMonsterStatusEffects = { ...monster.statusEffects, burn: { duration: 2, damage: burnDamage } };
+                    logMessage += ` 2턴간 화상을 입힌다!`;
+                }
+                addLog(logMessage, 'player-turn');
+                break;
+            default: // Adventurer
+                damage = calculateDamage(Math.floor(totalAttack * 1.5), monster.defense);
+                newMonsterHp -= damage;
+                logMessage = `${playerStats.playerName}의 직업 기술 '${JobSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
+                addDamagePopup(String(damage), false, 'enemy');
+                addLog(logMessage, 'player-turn');
+                break;
+        }
+
+        if (newMonsterStatusEffects) {
+            setMonster(m => ({ ...m, hp: newMonsterHp, statusEffects: newMonsterStatusEffects }));
+        } else {
+            setMonster(m => ({ ...m, hp: newMonsterHp }));
+        }
+        
+        setSkillCooldown(0);
+
+        if (newMonsterHp <= 0) {
+            setMonster(m => ({ ...m, hp: 0 }));
+            handleMonsterDefeated();
+        } else {
+            endPlayerTurn();
+        }
+    };
+
 
     const handleUseUltimate = () => {
         if (ultimateCharge < 5 || !isPlayerTurn || !monster) return;
@@ -1522,7 +1793,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             damage = calculateDamage(Math.floor(totalAttack * 3), monster.defense);
             const stunApplied = Math.random() < 0.5;
             if (stunApplied) {
-                setMonster(prev => ({...prev, statusEffects: { stun: 1 }}));
+                setMonster(prev => ({...prev, statusEffects: { ...prev.statusEffects, stun: 1 }}));
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입히고 기절시켰다!`;
             } else {
                 logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Warrior.name}'! ${monster.name}에게 ${damage}의 피해를 입혔다!`;
@@ -1538,6 +1809,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         } else { // Adventurer
             damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
+            isCritUltimate = false;
         }
 
         addLog(logMessage, 'player-turn');
@@ -1550,7 +1822,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
             handleMonsterDefeated();
         } else {
             setMonster(m => ({ ...m, hp: newMonsterHp }));
-            setIsPlayerTurn(false);
+            endPlayerTurn();
         }
     };
     
@@ -1605,6 +1877,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
                      <div className="battle-actions">
                         <button onClick={handlePlayerAttack} disabled={!isPlayerTurn}>공격</button>
                         <button onClick={() => setShowInventory(true)} disabled={!isPlayerTurn}>아이템</button>
+                         <button onClick={handleUseJobSkill} disabled={!isPlayerTurn || skillCooldown < 3}>직업 기술 ({skillCooldown}/3)</button>
                         <button onClick={handleUseUltimate} disabled={!isPlayerTurn || ultimateCharge < 5} className="ultimate-button">궁극기 ({ultimateCharge}/5)</button>
                     </div>
                 )}
@@ -1644,7 +1917,8 @@ const DungeonView = ({ setView, setCurrentDungeon }) => {
 
 const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const [tab, setTab] = useState('item'); // 'item' or 'pet'
-    const [selectedEntity, setSelectedEntity] = useState(null);
+    // FIX: Set type of selectedEntity to any to allow properties of both items and pets.
+    const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
     const enhancableItems = useMemo(() => {
         return playerStats.inventory
@@ -1694,7 +1968,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const enhancementCost = tab === 'item' ? getItemEnhancementCost(selectedEntity) : getPetEnhancementCost(selectedEntity);
 
     const canEnhance = () => {
-        if (!selectedEntity) return false;
+        if (!selectedEntity || (selectedEntity.enhancementLevel || 0) >= 15) return false;
         if (playerStats.gold < enhancementCost.gold) return false;
         
         for (const mat of enhancementCost.materials) {
@@ -1706,7 +1980,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
 
     const handleItemEnhance = () => {
         if (!canEnhance()) {
-            alert('재료 또는 골드가 부족합니다.');
+            alert('재료 또는 골드가 부족하거나 최대 강화 레벨에 도달했습니다.');
             return;
         }
 
@@ -1715,6 +1989,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
 
         setPlayerStats(prev => {
             let newInventory = [...prev.inventory];
+            let newEquipment = { ...prev.equipment };
             let newGold = prev.gold - enhancementCost.gold;
 
             enhancementCost.materials.forEach(mat => {
@@ -1730,6 +2005,12 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 } else {
                     newInventory.splice(itemIndex, 1);
                 }
+            } else { // It must be an equipped item
+                if (newEquipment.weapon?.id === selectedEntity.id && (newEquipment.weapon.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0)) {
+                    newEquipment.weapon = null;
+                } else if (newEquipment.armor?.id === selectedEntity.id && (newEquipment.armor.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0)) {
+                    newEquipment.armor = null;
+                }
             }
 
             if (success) {
@@ -1740,8 +2021,24 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 } else {
                     newInventory.push(newEnhancedItem);
                 }
+                
+                // If it was equipped, re-equip the new version
+                if (!newEquipment.weapon && selectedEntity.type === ItemType.WEAPON) {
+                    newEquipment.weapon = newEnhancedItem;
+                    newInventory.pop(); // Remove from inventory as it's equipped
+                } else if (!newEquipment.armor && selectedEntity.type === ItemType.ARMOR) {
+                    newEquipment.armor = newEnhancedItem;
+                    newInventory.pop();
+                }
+            } else {
+                // If failed and it was equipped, put it back
+                 if (!newEquipment.weapon && selectedEntity.type === ItemType.WEAPON) {
+                    newEquipment.weapon = selectedEntity;
+                } else if (!newEquipment.armor && selectedEntity.type === ItemType.ARMOR) {
+                    newEquipment.armor = selectedEntity;
+                }
             }
-            return { ...prev, gold: newGold, inventory: newInventory };
+            return { ...prev, gold: newGold, inventory: newInventory, equipment: newEquipment };
         });
 
         if (success) {
@@ -1749,14 +2046,14 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             setSelectedEntity(newEnhancedItem);
             alert('강화에 성공했습니다!');
         } else {
-            setSelectedEntity(null);
+            setSelectedEntity(selectedEntity); // Keep the item selected
             alert('강화에 실패했습니다...');
         }
     };
     
     const handlePetEnhance = () => {
         if (!canEnhance()) {
-            alert('재료 또는 골드가 부족합니다.');
+            alert('재료 또는 골드가 부족하거나 최대 강화 레벨에 도달했습니다.');
             return;
         }
 
@@ -1788,10 +2085,14 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             setSelectedEntity(newlyEnhancedPet);
             alert('펫 강화에 성공했습니다!');
         } else {
-            setSelectedEntity(null);
+            setSelectedEntity(selectedEntity); // Keep pet selected
             alert('펫 강화에 실패했습니다...');
         }
     };
+
+    const enhancementSuccessChance = getEnhancementSuccessChance(selectedEntity, tab);
+    const isMaxLevel = selectedEntity && (selectedEntity.enhancementLevel || 0) >= 15;
+
 
     return (
         <div className="card">
@@ -1801,12 +2102,25 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                 <button className={tab === 'item' ? 'active' : ''} onClick={() => { setTab('item'); setSelectedEntity(null); }}>장비 강화</button>
                 <button className={tab === 'pet' ? 'active' : ''} onClick={() => { setTab('pet'); setSelectedEntity(null); }}>펫 강화</button>
             </div>
-            <p>장착 중인 장비는 강화할 수 없습니다. 해제 후 시도해주세요.</p>
+            
             <div className="blacksmith-container">
                 <div className="item-list-panel card">
                     <h3>강화할 대상 선택</h3>
                     {tab === 'item' ? (
-                        enhancableItems.map(item => (
+                        <>
+                        <h4>장착 장비</h4>
+                        {Object.values(playerStats.equipment).filter(Boolean).map((item: any) => (
+                             <div 
+                                key={`${item.id}-${item.enhancementLevel||0}-equipped`} 
+                                className={`list-item ${selectedEntity?.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
+                                onClick={() => setSelectedEntity(item)}
+                            >
+                                <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} (장착중)</span>
+                            </div>
+                        ))}
+                        <hr />
+                        <h4>인벤토리</h4>
+                        {enhancableItems.map(item => (
                             <div 
                                 key={`${item.id}-${item.enhancementLevel||0}`} 
                                 className={`list-item ${selectedEntity?.id === item.id && (selectedEntity.enhancementLevel||0) === (item.enhancementLevel||0) ? 'selected' : ''}`}
@@ -1814,7 +2128,8 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                             >
                                 <span className={ItemGradeInfo[item.grade]?.class}>{getDisplayName(item)} (x{item.quantity})</span>
                             </div>
-                        ))
+                        ))}
+                        </>
                     ) : (
                         enhancablePets.map(pet => (
                              <div 
@@ -1833,31 +2148,37 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                             <h3>{getDisplayName(selectedEntity)} 강화</h3>
                              <div className="enhancement-stats">
                                 {tab === 'item' ? (<>
-                                    {selectedEntity.type === ItemType.WEAPON && <p>공격력: {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>}
-                                    {(selectedEntity.type === ItemType.ARMOR || selectedEntity.type === ItemType.PET_ARMOR) && <p>방어력: {selectedEntity.defense + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defense + (selectedEntity.enhancementLevel || 0) + 1}</p>}
+                                    {selectedEntity.type === ItemType.WEAPON && <p>공격력: {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) * 2)} {!isMaxLevel && <> <span className="arrow">→</span> {selectedEntity.damage + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</>}</p>}
+                                    {(selectedEntity.type === ItemType.ARMOR || selectedEntity.type === ItemType.PET_ARMOR) && <p>방어력: {selectedEntity.defense + (selectedEntity.enhancementLevel || 0)} {!isMaxLevel && <> <span className="arrow">→</span> {selectedEntity.defense + (selectedEntity.enhancementLevel || 0) + 1}</>}</p>}
                                 </>) : (<>
-                                    <p>공격력 보너스: {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) * 2)} <span className="arrow">→</span> {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</p>
-                                    <p>방어력 보너스: {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0) + 1}</p>
+                                    <p>공격력 보너스: {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) * 2)} {!isMaxLevel && <> <span className="arrow">→</span> {selectedEntity.attackBonus + ((selectedEntity.enhancementLevel || 0) + 1) * 2}</>}</p>
+                                    <p>방어력 보너스: {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0)} {!isMaxLevel && <> <span className="arrow">→</span> {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0) + 1}</>}</p>
                                 </>)}
                             </div>
-                            <h4>강화 성공 확률: {Math.round(getEnhancementSuccessChance(selectedEntity, tab) * 100)}%</h4>
-                            <h4>필요 재료</h4>
-                            <ul className="material-list">
-                                <li className={playerStats.gold >= enhancementCost.gold ? 'sufficient' : 'insufficient'}>
-                                    골드: {formatNumber(enhancementCost.gold)} G (보유: {formatNumber(playerStats.gold)})
-                                </li>
-                                {enhancementCost.materials.map(mat => {
-                                    const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
-                                    const playerQty = playerMat?.quantity || 0;
-                                    const matInfo = allItems.find(i => i.id === mat.materialId);
-                                    return (
-                                        <li key={mat.materialId} className={playerQty >= mat.quantity ? 'sufficient' : 'insufficient'}>
-                                            {matInfo.name}: {mat.quantity} (보유: {playerQty})
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                            <button onClick={tab === 'item' ? handleItemEnhance : handlePetEnhance} disabled={!canEnhance()}>강화하기</button>
+                            {isMaxLevel ? (
+                                <h4 style={{color: 'gold'}}>최대 강화 레벨입니다!</h4>
+                            ) : (
+                                <>
+                                <h4>강화 성공 확률: {Math.round(enhancementSuccessChance * 100)}%</h4>
+                                <h4>필요 재료</h4>
+                                <ul className="material-list">
+                                    <li className={playerStats.gold >= enhancementCost.gold ? 'sufficient' : 'insufficient'}>
+                                        골드: {formatNumber(enhancementCost.gold)} G (보유: {formatNumber(playerStats.gold)})
+                                    </li>
+                                    {enhancementCost.materials.map(mat => {
+                                        const playerMat = playerStats.inventory.find(i => i.id === mat.materialId);
+                                        const playerQty = playerMat?.quantity || 0;
+                                        const matInfo = allItems.find(i => i.id === mat.materialId);
+                                        return (
+                                            <li key={mat.materialId} className={playerQty >= mat.quantity ? 'sufficient' : 'insufficient'}>
+                                                {matInfo.name}: {mat.quantity} (보유: {playerQty})
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                                <button onClick={tab === 'item' ? handleItemEnhance : handlePetEnhance} disabled={!canEnhance()}>강화하기</button>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
