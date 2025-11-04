@@ -66,6 +66,11 @@ const UltimateSkills = {
 const PET_GACHA_COST = 500;
 const ITEM_GACHA_COST = 300;
 
+// --- ENHANCEMENT CHANCES ---
+const itemEnhancementChances = [1.0, 0.95, 0.90, 0.85, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.15, 0.10, 0.08, 0.05]; // For levels +0 to +14
+const petEnhancementChances =  [1.0, 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.15, 0.10]; // For levels +0 to +14
+
+
 const allPets = [
     { id: 1, name: '그리핀 주니어', type: 'Griffin', grade: ItemGrade.RARE, attackBonus: 5, defenseBonus: 0, skillName: '할퀴기', skillDescription: '15% 확률로 추가 피해를 입힙니다.', skillProcChance: 0.15, skillEffect: { type: 'damage', amount: 10 }, sellPrice: 100 },
     { id: 2, name: '돌북이', type: 'Turtle', grade: ItemGrade.RARE, attackBonus: 0, defenseBonus: 8, skillName: '단단해지기', skillDescription: '전투 시작 시 방어력이 10% 증가합니다.', skillProcChance: 1.0, sellPrice: 100 },
@@ -351,6 +356,21 @@ const getInitialPlayerStats = () => ({
 
 // --- UTILITY FUNCTIONS ---
 const formatNumber = (num) => num.toLocaleString();
+
+const getEnhancementSuccessChance = (entity, type) => {
+    if (!entity) return 0;
+    const level = entity.enhancementLevel || 0;
+    const maxLevel = 14;
+
+    if (type === 'item') {
+        const chance = level > maxLevel ? itemEnhancementChances[maxLevel] : itemEnhancementChances[level];
+        return chance;
+    } else if (type === 'pet') {
+        const chance = level > maxLevel ? petEnhancementChances[maxLevel] : petEnhancementChances[level];
+        return chance;
+    }
+    return 0;
+};
 
 const getDisplayName = (item) => {
     if (!item) return '없음';
@@ -1690,39 +1710,48 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             return;
         }
 
+        const successChance = getEnhancementSuccessChance(selectedEntity, 'item');
+        const success = Math.random() < successChance;
+
         setPlayerStats(prev => {
             let newInventory = [...prev.inventory];
-
-            // Deduct cost
             let newGold = prev.gold - enhancementCost.gold;
+
             enhancementCost.materials.forEach(mat => {
                 const matIndex = newInventory.findIndex(i => i.id === mat.materialId);
                 newInventory[matIndex].quantity -= mat.quantity;
             });
             newInventory = newInventory.filter(i => i.quantity > 0);
 
-            // Remove one of the old items
             const itemIndex = newInventory.findIndex(i => i.id === selectedEntity.id && (i.enhancementLevel || 0) === (selectedEntity.enhancementLevel || 0));
-            if (newInventory[itemIndex].quantity > 1) {
+            if (itemIndex > -1) {
+                if (newInventory[itemIndex].quantity > 1) {
                     newInventory[itemIndex].quantity--;
-            } else {
-                newInventory.splice(itemIndex, 1);
+                } else {
+                    newInventory.splice(itemIndex, 1);
+                }
             }
 
-            // Add the new enhanced item
-            const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1, quantity: 1 };
-            
-            const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
-            if (existingStack) {
-                existingStack.quantity++;
-            } else {
-                newInventory.push(newEnhancedItem);
+            if (success) {
+                const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1, quantity: 1 };
+                const existingStack = newInventory.find(i => i.id === newEnhancedItem.id && i.enhancementLevel === newEnhancedItem.enhancementLevel);
+                if (existingStack) {
+                    existingStack.quantity++;
+                } else {
+                    newInventory.push(newEnhancedItem);
+                }
             }
-            
-            setSelectedEntity(newEnhancedItem);
             return { ...prev, gold: newGold, inventory: newInventory };
         });
-        alert('강화에 성공했습니다!');
+
+        if (success) {
+            const newEnhancedItem = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1 };
+            setSelectedEntity(newEnhancedItem);
+            alert('강화에 성공했습니다!');
+        } else {
+            setSelectedEntity(null);
+            alert('강화에 실패했습니다...');
+        }
     };
     
     const handlePetEnhance = () => {
@@ -1730,6 +1759,9 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             alert('재료 또는 골드가 부족합니다.');
             return;
         }
+
+        const successChance = getEnhancementSuccessChance(selectedEntity, 'pet');
+        const success = Math.random() < successChance;
 
         setPlayerStats(prev => {
             let newInventory = [...prev.inventory];
@@ -1740,18 +1772,25 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
             });
             newInventory = newInventory.filter(i => i.quantity > 0);
             
-            const newPets = prev.pets.map(p => 
-                p.id === selectedEntity.id 
-                ? { ...p, enhancementLevel: (p.enhancementLevel || 0) + 1 }
-                : p
-            );
-            
-            const newlyEnhancedPet = newPets.find(p => p.id === selectedEntity.id);
-            setSelectedEntity(newlyEnhancedPet);
-
+            let newPets = prev.pets;
+            if (success) {
+                newPets = prev.pets.map(p => 
+                    p.id === selectedEntity.id 
+                    ? { ...p, enhancementLevel: (p.enhancementLevel || 0) + 1 }
+                    : p
+                );
+            }
             return { ...prev, gold: newGold, inventory: newInventory, pets: newPets };
         });
-        alert('펫 강화에 성공했습니다!');
+        
+        if (success) {
+            const newlyEnhancedPet = { ...selectedEntity, enhancementLevel: (selectedEntity.enhancementLevel || 0) + 1 };
+            setSelectedEntity(newlyEnhancedPet);
+            alert('펫 강화에 성공했습니다!');
+        } else {
+            setSelectedEntity(null);
+            alert('펫 강화에 실패했습니다...');
+        }
     };
 
     return (
@@ -1801,6 +1840,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
                                     <p>방어력 보너스: {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0)} <span className="arrow">→</span> {selectedEntity.defenseBonus + (selectedEntity.enhancementLevel || 0) + 1}</p>
                                 </>)}
                             </div>
+                            <h4>강화 성공 확률: {Math.round(getEnhancementSuccessChance(selectedEntity, tab) * 100)}%</h4>
                             <h4>필요 재료</h4>
                             <ul className="material-list">
                                 <li className={playerStats.gold >= enhancementCost.gold ? 'sufficient' : 'insufficient'}>
