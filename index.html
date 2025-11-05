@@ -20,6 +20,12 @@
             --grade-rare: #0070dd;
             --grade-epic: #a335ee;
             --grade-legendary: #ff8000;
+            --grade-mythic-1: #00ffff;
+            --grade-mythic-2: #ff00ff;
+            --grade-mythic-3: #ffff00;
+            --grade-secret: #ff00ff;
+            --grade-ultimate-rainbow: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+            --grade-master-glow: #00e6e6;
         }
 
         body {
@@ -108,7 +114,7 @@
         .grade-epic { color: var(--grade-epic); }
         .grade-legendary { color: var(--grade-legendary); font-weight: bold; }
         .grade-mythic {
-            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            background: linear-gradient(45deg, var(--grade-mythic-1), var(--grade-mythic-2), var(--grade-mythic-3), var(--grade-mythic-1));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-size: 200% 200%;
@@ -116,18 +122,24 @@
             font-weight: bold;
         }
         .grade-secret {
-            color: #ff00ff;
+            color: var(--grade-secret);
             font-weight: bold;
-            text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;
+            text-shadow: 0 0 5px var(--grade-secret), 0 0 10px var(--grade-secret), 0 0 15px var(--grade-secret);
             animation: secret-pulse 1.5s infinite;
         }
         .grade-ultimate {
-            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+            background: var(--grade-ultimate-rainbow);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-size: 300% 300%;
             animation: ultimate-rainbow 2s linear infinite;
             font-weight: bold;
+        }
+        .grade-master {
+            color: #f0f0f0;
+            font-weight: bold;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--grade-master-glow), 0 0 20px var(--grade-master-glow);
+            animation: master-flicker 2s infinite alternate;
         }
 
         @keyframes mythic-shine {
@@ -138,19 +150,28 @@
         
         @keyframes secret-pulse {
             0% {
-                text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;
+                text-shadow: 0 0 5px var(--grade-secret), 0 0 10px var(--grade-secret), 0 0 15px var(--grade-secret);
             }
             50% {
                 text-shadow: 0 0 10px #ff4dff, 0 0 20px #ff4dff, 0 0 30px #ff4dff;
             }
             100% {
-                text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;
+                text-shadow: 0 0 5px var(--grade-secret), 0 0 10px var(--grade-secret), 0 0 15px var(--grade-secret);
             }
         }
 
         @keyframes ultimate-rainbow {
             0% { background-position: 0% 50%; }
             100% { background-position: 150% 50%; }
+        }
+
+        @keyframes master-flicker {
+            0%, 100% {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--grade-master-glow), 0 0 20px var(--grade-master-glow);
+            }
+            50% {
+                text-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 25px #00ffff, 0 0 35px #00ffff;
+            }
         }
 
         /* Stat Bar */

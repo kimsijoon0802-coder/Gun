@@ -37,6 +37,7 @@ const ItemGrade = {
     MYTHIC: 'MYTHIC',
     SECRET: 'SECRET',
     ULTIMATE: 'ULTIMATE',
+    MASTER: 'MASTER',
 };
 
 const ItemGradeInfo = {
@@ -48,6 +49,7 @@ const ItemGradeInfo = {
     [ItemGrade.MYTHIC]: { name: '신화', color: '#00ffff', class: 'grade-mythic', order: 6 },
     [ItemGrade.SECRET]: { name: '시크릿', color: '#ff00ff', class: 'grade-secret', order: 7 },
     [ItemGrade.ULTIMATE]: { name: '궁극', color: '#ff0000', class: 'grade-ultimate', order: 8 },
+    [ItemGrade.MASTER]: { name: '마스터', color: '#e0e0e0', class: 'grade-master', order: 9 },
 };
 
 const PlayerClasses = {
@@ -182,6 +184,13 @@ const allItems = [
     { id: 91, type: ItemType.WEAPON, name: '싱귤래리티 캐논', price: 50000000, grade: ItemGrade.ULTIMATE, weaponType: 'Gun', damage: 400, accuracy: 1.0, description: '블랙홀의 힘을 응축하여 발사하는 총. 그 무엇도 피할 수 없습니다.' },
     { id: 92, type: ItemType.WEAPON, name: '별의 종언', price: 48000000, grade: ItemGrade.ULTIMATE, weaponType: 'Bow', damage: 350, accuracy: 1.8, critChance: 0.8, critDamageMultiplier: 6.0, description: '별들의 마지막 빛으로 만든 활. 화살은 시공간을 꿰뚫습니다.' },
     { id: 93, type: ItemType.ARMOR, name: '시공간의 갑주', price: 38000000, grade: ItemGrade.ULTIMATE, defense: 300, description: '시간과 공간의 경계에서 벼려낸 갑옷. 모든 물리 법칙을 무시합니다.' },
+    // --- 마스터 등급 아이템 ---
+    { id: 94, type: ItemType.WEAPON, name: '창조신의 숨결', price: 120000000, grade: ItemGrade.MASTER, damage: 500, accuracy: 1.5, critChance: 0.6, critDamageMultiplier: 5.0, procChance: 0.75, procDamage: 350, description: '세상을 창조한 신의 숨결이 깃든 검. 모든 존재를 근원으로 되돌립니다. 75% 확률로 시공간을 붕괴시키는 힘을 방출합니다.' },
+    { id: 95, type: ItemType.WEAPON, name: '제로 포인트 이레이저', price: 135000000, grade: ItemGrade.MASTER, weaponType: 'Gun', damage: 550, accuracy: 1.2, description: '존재의 인과율 자체를 지워버리는 총. 발사된 탄환은 현실을 부정합니다.' },
+    { id: 96, type: ItemType.WEAPON, name: '네뷸라 스트링', price: 130000000, grade: ItemGrade.MASTER, weaponType: 'Bow', damage: 480, accuracy: 2.0, critChance: 0.9, critDamageMultiplier: 7.0, description: '성운의 빛을 엮어 만든 활. 화살은 운명을 꿰뚫고 별을 파괴합니다.' },
+    { id: 97, type: ItemType.ARMOR, name: '이데아의 형상', price: 100000000, grade: ItemGrade.MASTER, defense: 400, description: '모든 개념의 근원이 되는 갑옷. 현실 세계의 법칙이 통하지 않습니다.' },
+    { id: 98, type: ItemType.ARMOR, name: '절대 영도의 장막', price: 110000000, grade: ItemGrade.MASTER, defense: 380, description: '모든 움직임과 에너지가 멈추는 절대 영도의 힘이 깃든 갑옷. 어떤 공격도 그 앞에서 얼어붙습니다.' },
+    { id: 99, type: ItemType.ARMOR, name: '사건의 지평선 갑주', price: 105000000, grade: ItemGrade.MASTER, defense: 390, description: '블랙홀의 경계면으로 만들어진 갑옷. 들어온 모든 공격은 되돌아가지 못합니다.' },
 ];
 
 const allMaterials = [
@@ -1668,7 +1677,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const getItemEnhancementCost = (item) => {
         if (!item) return { gold: 0, materials: [] };
         const level = item.enhancementLevel || 0;
-        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20, ULTIMATE: 40 };
+        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20, ULTIMATE: 40, MASTER: 80 };
         
         const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * (gradeMultiplier[item.grade] || 1));
         
