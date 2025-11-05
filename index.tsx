@@ -56,13 +56,15 @@ const PlayerClasses = {
     Warrior: { name: '전사', description: '강인한 체력과 방어력을 가집니다. (최대 HP +20, 방어력 +5)', bonuses: { maxHp: 20, defense: 5, attack: 0 } },
     Archer: { name: '궁수', description: '높은 공격력과 치명타 확률을 자랑합니다. (공격력 +5, 치명타 확률 +5%)', bonuses: { attack: 5, critChance: 0.05, maxHp: 0, defense: 0 } },
     Magician: { name: '마법사', description: '마력을 다루어 강력한 원소 공격을 합니다. (공격력 +7, 최대 HP -10)', bonuses: { attack: 7, maxHp: -10, defense: 0 } },
+    Hunter: { name: '사냥꾼', description: '동물과 교감하며 활과 총을 다루는 데 능숙합니다. (공격력 +3, 활/총 계열 무기 명중률 +10%)', bonuses: { attack: 3, maxHp: 0, defense: 0 } },
 };
 
 const UltimateSkills = {
     Adventurer: { name: '파워 스트라이크', description: '적에게 250%의 피해를 입힙니다.' },
     Warrior: { name: '분쇄의 일격', description: '적에게 300%의 피해를 입히고 50% 확률로 1턴 동안 기절시킵니다.' },
     Archer: { name: '저격', description: '반드시 치명타로 적중하는 강력한 화살을 발사합니다. (기본 치명타 피해량의 200%)' },
-    Magician: { name: '메테오', description: '거대한 운석을 떨어트려 적에게 400%의 막대한 피해를 입힙니다.' }
+    Magician: { name: '메테오', description: '거대한 운석을 떨어트려 적에게 400%의 막대한 피해를 입힙니다.' },
+    Hunter: { name: '야수의 격노', description: '펫과 함께 협공하여 적에게 350%의 강력한 피해를 입힙니다.' },
 };
 
 const PET_GACHA_COST = 500;
@@ -980,7 +982,10 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         setTimeout(() => setPlayerAttacking(false), 400);
 
         const weapon = playerStats.equipment.weapon;
-        const accuracy = weapon?.accuracy || 0.9;
+        let accuracy = weapon?.accuracy || 0.9;
+        if (playerStats.playerClass === 'Hunter' && (weapon?.weaponType === 'Bow' || weapon?.weaponType === 'Gun')) {
+            accuracy += 0.1;
+        }
 
         if (Math.random() > accuracy) {
             addLog(`${playerStats.playerName}의 공격이 빗나갔다!`, 'player-turn');
@@ -1093,6 +1098,9 @@ const BattleView = ({ playerStats, setPlayerStats, setView, difficulty }) => {
         } else if (playerClass === 'Magician') {
             damage = calculateDamage(Math.floor(totalAttack * 4), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
+        } else if (playerClass === 'Hunter') {
+            damage = calculateDamage(Math.floor(totalAttack * 3.5), monster.defense);
+            logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Hunter.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
         } else { // Adventurer
             damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
@@ -1438,7 +1446,10 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         setTimeout(() => setPlayerAttacking(false), 400);
         
         const weapon = playerStats.equipment.weapon;
-        const accuracy = weapon?.accuracy || 0.9;
+        let accuracy = weapon?.accuracy || 0.9;
+        if (playerStats.playerClass === 'Hunter' && (weapon?.weaponType === 'Bow' || weapon?.weaponType === 'Gun')) {
+            accuracy += 0.1;
+        }
 
         if (Math.random() > accuracy) {
             addLog(`${playerStats.playerName}의 공격이 빗나갔다!`, 'player-turn');
@@ -1544,6 +1555,9 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
         } else if (playerClass === 'Magician') {
             damage = calculateDamage(Math.floor(totalAttack * 4), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Magician.name}'! ${monster.name}에게 ${damage}의 막대한 피해를 입혔다!`;
+        } else if (playerClass === 'Hunter') {
+            damage = calculateDamage(Math.floor(totalAttack * 3.5), monster.defense);
+            logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Hunter.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
         } else { // Adventurer
             damage = calculateDamage(Math.floor(totalAttack * 2.5), monster.defense);
             logMessage = `${playerStats.playerName}의 궁극기 '${UltimateSkills.Adventurer.name}'! ${monster.name}에게 ${damage}의 강력한 피해를 입혔다!`;
