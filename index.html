@@ -28,6 +28,9 @@
             --grade-master-glow: #00e6e6;
             --grade-champion-glow1: #ffd700;
             --grade-champion-glow2: #ffffff;
+            --grade-grand-champion-glow1: #e6e6fa; /* lavender */
+            --grade-grand-champion-glow2: #483d8b; /* darkslateblue */
+            --grade-grand-champion-glow3: #c71585; /* mediumvioletred */
         }
 
         body {
@@ -148,6 +151,14 @@
             font-weight: bold;
             animation: champion-glow 3s infinite ease-in-out;
         }
+        .grade-grand-champion {
+            background: linear-gradient(120deg, var(--grade-grand-champion-glow1), var(--grade-grand-champion-glow2), var(--grade-grand-champion-glow3), var(--grade-grand-champion-glow1));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 300% 300%;
+            font-weight: bold;
+            animation: grand-champion-cosmic 4s ease-in-out infinite;
+        }
 
         @keyframes mythic-shine {
             0% { background-position: 0% 50%; }
@@ -187,6 +198,21 @@
             }
             50% {
                 text-shadow: 0 0 20px var(--grade-champion-glow2), 0 0 30px var(--grade-champion-glow2), 0 0 40px var(--grade-champion-glow1);
+            }
+        }
+        
+        @keyframes grand-champion-cosmic {
+            0% {
+                background-position: 0% 50%;
+                text-shadow: 0 0 10px var(--grade-grand-champion-glow1), 0 0 20px var(--grade-grand-champion-glow2);
+            }
+            50% {
+                background-position: 100% 50%;
+                text-shadow: 0 0 20px var(--grade-grand-champion-glow3), 0 0 30px var(--grade-grand-champion-glow1);
+            }
+            100% {
+                background-position: 0% 50%;
+                text-shadow: 0 0 10px var(--grade-grand-champion-glow1), 0 0 20px var(--grade-grand-champion-glow2);
             }
         }
 
