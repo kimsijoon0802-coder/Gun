@@ -26,6 +26,8 @@
             --grade-secret: #ff00ff;
             --grade-ultimate-rainbow: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
             --grade-master-glow: #00e6e6;
+            --grade-champion-glow1: #ffd700;
+            --grade-champion-glow2: #ffffff;
         }
 
         body {
@@ -141,6 +143,11 @@
             text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--grade-master-glow), 0 0 20px var(--grade-master-glow);
             animation: master-flicker 2s infinite alternate;
         }
+        .grade-champion {
+            color: var(--grade-champion-glow1);
+            font-weight: bold;
+            animation: champion-glow 3s infinite ease-in-out;
+        }
 
         @keyframes mythic-shine {
             0% { background-position: 0% 50%; }
@@ -171,6 +178,15 @@
             }
             50% {
                 text-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 25px #00ffff, 0 0 35px #00ffff;
+            }
+        }
+
+        @keyframes champion-glow {
+            0%, 100% {
+                text-shadow: 0 0 10px var(--grade-champion-glow1), 0 0 20px var(--grade-champion-glow1), 0 0 30px var(--grade-champion-glow2);
+            }
+            50% {
+                text-shadow: 0 0 20px var(--grade-champion-glow2), 0 0 30px var(--grade-champion-glow2), 0 0 40px var(--grade-champion-glow1);
             }
         }
 

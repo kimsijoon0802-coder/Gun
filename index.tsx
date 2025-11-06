@@ -38,6 +38,7 @@ const ItemGrade = {
     SECRET: 'SECRET',
     ULTIMATE: 'ULTIMATE',
     MASTER: 'MASTER',
+    CHAMPION: 'CHAMPION',
 };
 
 const ItemGradeInfo = {
@@ -50,6 +51,7 @@ const ItemGradeInfo = {
     [ItemGrade.SECRET]: { name: '시크릿', color: '#ff00ff', class: 'grade-secret', order: 7 },
     [ItemGrade.ULTIMATE]: { name: '궁극', color: '#ff0000', class: 'grade-ultimate', order: 8 },
     [ItemGrade.MASTER]: { name: '마스터', color: '#e0e0e0', class: 'grade-master', order: 9 },
+    [ItemGrade.CHAMPION]: { name: '챔피언', color: '#ffd700', class: 'grade-champion', order: 10 },
 };
 
 const PlayerClasses = {
@@ -193,6 +195,13 @@ const allItems = [
     { id: 97, type: ItemType.ARMOR, name: '이데아의 형상', price: 100000000, grade: ItemGrade.MASTER, defense: 400, description: '모든 개념의 근원이 되는 갑옷. 현실 세계의 법칙이 통하지 않습니다.' },
     { id: 98, type: ItemType.ARMOR, name: '절대 영도의 장막', price: 110000000, grade: ItemGrade.MASTER, defense: 380, description: '모든 움직임과 에너지가 멈추는 절대 영도의 힘이 깃든 갑옷. 어떤 공격도 그 앞에서 얼어붙습니다.' },
     { id: 99, type: ItemType.ARMOR, name: '사건의 지평선 갑주', price: 105000000, grade: ItemGrade.MASTER, defense: 390, description: '블랙홀의 경계면으로 만들어진 갑옷. 들어온 모든 공격은 되돌아가지 못합니다.' },
+    // --- 챔피언 등급 아이템 ---
+    { id: 100, type: ItemType.WEAPON, name: '차원의 균열', price: 500000000, grade: ItemGrade.CHAMPION, damage: 650, accuracy: 1.8, critChance: 0.75, critDamageMultiplier: 6.0, procChance: 0.8, procDamage: 400, description: '존재와 비존재의 경계를 베어버리는 검. 80% 확률로 시공간을 파괴하는 에너지를 방출합니다.' },
+    { id: 101, type: ItemType.WEAPON, name: '절대 소멸자', price: 550000000, grade: ItemGrade.CHAMPION, weaponType: 'Gun', damage: 700, accuracy: 1.5, description: '인과율을 무시하고 목표를 존재의 기록에서 삭제하는 총. 탄환은 개념을 파괴합니다.' },
+    { id: 102, type: ItemType.WEAPON, name: '인과율의 활', price: 530000000, grade: ItemGrade.CHAMPION, weaponType: 'Bow', damage: 620, accuracy: 2.5, critChance: 1.0, critDamageMultiplier: 8.0, description: '운명의 실을 쏘아보내는 활. 모든 공격은 필연적으로 치명타가 됩니다.' },
+    { id: 103, type: ItemType.ARMOR, name: '신성한 존재의 갑주', price: 400000000, grade: ItemGrade.CHAMPION, defense: 500, description: '신조차 범접할 수 없는 권능이 깃든 갑옷. 모든 공격을 축복으로 변환합니다.' },
+    { id: 104, type: ItemType.ARMOR, name: '불멸자의 외피', price: 420000000, grade: ItemGrade.CHAMPION, defense: 480, description: '죽음이라는 개념 자체가 통하지 않는 갑옷. 착용자는 불멸의 존재가 됩니다.' },
+    { id: 105, type: ItemType.ARMOR, name: '개념의 방벽', price: 410000000, grade: ItemGrade.CHAMPION, defense: 490, description: '\'피해\'라는 개념 자체를 차단하는 방어구. 공격은 의미를 잃고 소멸합니다.' },
 ];
 
 const allMaterials = [
@@ -261,7 +270,7 @@ const allDungeons = [
     { id: 29, name: '공허의 핵', description: '모든 것이 시작되고 끝나는 지점. 존재와 비존재의 경계가 무너집니다.', difficulty: 46, stages: 40, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 302, 302, 302, 302, 302, 301, 301, 301, 301, 301, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 22000000, gold: 44000000, items: [{ itemId: 80, quantity: 10 }] } },
     { id: 30, name: '부서진 하늘', description: '신들의 전쟁으로 산산조각 난 하늘. 그 파편 속에서 고대의 힘이 깨어납니다.', difficulty: 48, stages: 40, monsters: [301, 303, 301, 303, 301, 303, 301, 303, 301, 303, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 301, 302, 303, 304, 304, 304, 304, 304], rewards: { xp: 26000000, gold: 52000000, items: [{ itemId: 71, quantity: 1 }] } },
     { id: 31, name: '창조의 근원', description: '모든 생명이 시작된 곳. 하지만 지금은 파괴의 힘만이 남아있습니다.', difficulty: 50, stages: 40, monsters: [304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 30000000, gold: 60000000, items: [{ itemId: 80, quantity: 15 }] } },
-    { id: 32, name: '운명의 실타래', description: '모든 존재의 운명이 엮여있는 곳. 실을 끊는 순간, 모든 것이 사라집니다.', difficulty: 52, stages: 40, monsters: [301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 304, 304, 304, 304], rewards: { xp: 35000000, gold: 70000000, items: [{ itemId: 72, quantity: 1 }] } },
+    { id: 32, name: '운명의 실타래', description: '모든 존재의 운명이 엮여있는 곳. 실을 끊는 순간, 모든 것이 사라집니다.', difficulty: 52, stages: 40, monsters: [301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 301, 304, 304, 304, 304, 304], rewards: { xp: 35000000, gold: 70000000, items: [{ itemId: 72, quantity: 1 }] } },
     { id: 33, name: '침묵의 바다', description: '어떠한 소리도 존재하지 않는 심해. 오직 심연의 괴물들만이 존재를 알립니다.', difficulty: 54, stages: 40, monsters: [302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 302, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 40000000, gold: 80000000, items: [{ itemId: 80, quantity: 20 }] } },
     { id: 34, name: '핏빛 사막', description: '패배한 신들의 피로 물든 사막. 모래알 하나하나가 원한을 품고 있습니다.', difficulty: 56, stages: 40, monsters: [303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 45000000, gold: 90000000, items: [{ itemId: 73, quantity: 1 }] } },
     { id: 35, name: '만년빙벽', description: '세상의 끝에 위치한 거대한 얼음벽. 그 너머에는 무엇이 있을지 아무도 모릅니다.', difficulty: 58, stages: 45, monsters: [303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 303, 303, 303, 303, 303, 304, 304, 304, 304, 304, 304, 304, 304, 304, 304], rewards: { xp: 50000000, gold: 100000000, items: [{ itemId: 80, quantity: 25 }] } },
@@ -1691,7 +1700,7 @@ const BlacksmithView = ({ playerStats, setPlayerStats, setView }) => {
     const getItemEnhancementCost = (item) => {
         if (!item) return { gold: 0, materials: [] };
         const level = item.enhancementLevel || 0;
-        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20, ULTIMATE: 40, MASTER: 80 };
+        const gradeMultiplier = { COMMON: 1, UNCOMMON: 1.5, RARE: 2, EPIC: 3, LEGENDARY: 5, MYTHIC: 10, SECRET: 20, ULTIMATE: 40, MASTER: 80, CHAMPION: 160 };
         
         const goldCost = Math.floor(item.price * 0.1 * Math.pow(1.5, level) * (gradeMultiplier[item.grade] || 1));
         
