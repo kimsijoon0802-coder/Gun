@@ -249,7 +249,7 @@ const allMonsters = [
     { id: 305, name: '흡혈귀', hp: 12000, maxHp: 12000, attack: 1100, defense: 250, xp: 80000, gold: 150000, drops: [{ itemId: 12, chance: 1, quantity: 120 }], emoji: '🧛', abilities: [{ type: 'lifesteal', amount: 0.7 }] }
 ];
 
-const allDungeons = [
+const baseDungeons = [
     { id: 0, name: '슬라임 굴', description: '가장 약한 슬라임들이 모여있는 동굴입니다. 모험의 첫걸음으로 안성맞춤입니다.', difficulty: 1, stages: 10, monsters: [1, 1, 1, 1, 2, 1, 1, 2, 1, 2], rewards: { xp: 200, gold: 300, items: [{ itemId: 43, quantity: 1 }] } },
     { id: 1, name: '고블린 동굴', description: '초보 모험가에게 적합한 동굴입니다. 고블린들이 서식하고 있습니다.', difficulty: 2, stages: 10, monsters: [2, 2, 2, 3, 2, 3, 2, 3, 3, 3], rewards: { xp: 600, gold: 1200, items: [{ itemId: 3, quantity: 1 }, { itemId: 12, quantity: 5 }] } },
     { id: 2, name: '오크의 전초기지', description: '강력한 오크들이 지키고 있는 전초기지입니다. 단단히 준비해야 합니다.', difficulty: 3, stages: 10, monsters: [3, 3, 3, 3, 3, 4, 3, 4, 3, 4], rewards: { xp: 2500, gold: 5000, items: [{ itemId: 9, quantity: 1 }, { itemId: 12, quantity: 15 }] } },
@@ -300,6 +300,46 @@ const allDungeons = [
     { id: 47, name: '절대자의 영역', description: '이 게임의 법칙을 초월한 존재가 머무는 곳. 당신의 모든 데이터가 그의 손에 달려있습니다.', difficulty: 90, stages: 50, monsters: [305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305], rewards: { xp: 200000000, gold: 400000000, items: [{ itemId: 71, quantity: 1 }, { itemId: 76, quantity: 1 }] } },
     { id: 48, name: '환장 그 자체', description: '설명이 필요한가요? 이 던전은 그냥... 환장합니다.', difficulty: 95, stages: 50, monsters: [301, 302, 303, 305, 301, 302, 303, 305, 301, 302, 303, 305, 301, 302, 303, 305, 301, 302, 303, 305, 305, 303, 302, 301, 305, 303, 302, 301, 305, 303, 302, 301, 305, 303, 302, 301, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305, 305], rewards: { xp: 250000000, gold: 500000000, items: [{ itemId: 80, quantity: 150 }] } },
     { id: 49, name: '개발자의 책상', description: '버그와 마감일, 그리고 끝없는 커피... 이 게임에서 가장 무서운 곳입니다. [개발자가 당신을 지켜보고 있습니다.]', difficulty: 100, stages: 1, monsters: [304], rewards: { xp: 999999999, gold: 999999999, items: [{ itemId: 81, quantity: 1 }] } }
+];
+
+// --- High Level Dungeon Generation ---
+const generateHighLevelDungeons = () => {
+    const dungeons = [];
+    const themes = [
+        { name: "기계의 반란", monster: 4 }, // Reusing dungeon guardian
+        { name: "네온 시티", monster: 203 },
+        { name: "심해의 공포", monster: 304 },
+        { name: "천상의 요새", monster: 303 },
+        { name: "악마의 소굴", monster: 201 }
+    ];
+    
+    for (let i = 50; i <= 100; i++) {
+        const themeIndex = Math.floor((i - 50) / 10) % themes.length;
+        const theme = themes[themeIndex];
+        const difficulty = 100 + (i - 50) * 10;
+        const rewardMultiplier = (i - 49);
+        const stageCount = 50 + Math.floor((i - 50) / 5);
+
+        dungeons.push({
+            id: i,
+            name: `[Lv.${i}] ${theme.name} ${i % 10 + 1}구역`,
+            description: `초월적인 존재들이 지배하는 ${theme.name}의 ${i % 10 + 1}번째 구역입니다. 끝이 보이지 않습니다.`,
+            difficulty: difficulty,
+            stages: stageCount,
+            monsters: Array(stageCount).fill(theme.monster),
+            rewards: { 
+                xp: 300000000 * rewardMultiplier, 
+                gold: 600000000 * rewardMultiplier, 
+                items: i % 5 === 0 ? [{ itemId: 80, quantity: i }] : [] 
+            }
+        });
+    }
+    return dungeons;
+};
+
+const allDungeons = [
+    ...baseDungeons,
+    ...generateHighLevelDungeons()
 ];
 
 const allQuests = [
@@ -413,9 +453,6 @@ const getDisplayName = (item) => {
 };
 
 const calculateDamage = (attack, defense) => {
-    // Defense provides percentage-based damage reduction
-    // Formula: damageReduction = defense / (defense + K) where K is a constant. Let's use 100.
-    // e.g., 50 def = 33% reduction, 100 def = 50% reduction, 200 def = 66% reduction
     const damageReduction = defense / (defense + 100);
     const finalDamage = attack * (1 - damageReduction);
     return Math.max(1, Math.round(finalDamage));
@@ -1351,7 +1388,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
     );
 
     useEffect(() => {
-        const monsterId = dungeon.monsters[currentStage - 1];
+        const monsterId = dungeon.monsters[Math.min(currentStage - 1, dungeon.monsters.length - 1)];
         const newMonster = { ...allMonsters.find(m => m.id === monsterId) };
         setMonster(newMonster);
         setIsPlayerTurn(true);
@@ -1431,7 +1468,7 @@ const DungeonBattleView = ({ dungeon, playerStats, setPlayerStats, endDungeon })
                 let finalGold = prev.gold + dungeon.rewards.gold;
                 const newInventory = [...prev.inventory];
                 dungeon.rewards.items.forEach(rewardItem => {
-                    addLog(`${allItems.find(i=>i.id === rewardItem.itemId)?.name} x${rewardItem.quantity} 획득!`, 'effect-message');
+                    addLog(`${allItems.find(i=>i.id === rewardItem.itemId)?.name} x{rewardItem.quantity} 획득!`, 'effect-message');
                     const itemInfo = allItems.find(i => i.id === rewardItem.itemId);
                     const existingItem = newInventory.find(i => i.id === itemInfo.id && !(i.enhancementLevel > 0));
                     if (existingItem) {
