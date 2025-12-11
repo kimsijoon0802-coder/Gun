@@ -31,6 +31,7 @@
             --grade-grand-champion-glow1: #e6e6fa; /* lavender */
             --grade-grand-champion-glow2: #483d8b; /* darkslateblue */
             --grade-grand-champion-glow3: #c71585; /* mediumvioletred */
+            --grade-cosmic-bg: linear-gradient(135deg, #2e004d, #000000, #4b0082);
         }
 
         body {
@@ -159,6 +160,16 @@
             font-weight: bold;
             animation: grand-champion-cosmic 4s ease-in-out infinite;
         }
+        .grade-cosmic {
+             background: url('https://media.giphy.com/media/U3qYN8S0j3bpK/giphy.gif'); /* Placeholder for stars */
+             background-color: #2e004d; /* Fallback */
+             color: #e0b0ff;
+             -webkit-background-clip: text;
+             /* -webkit-text-fill-color: transparent; Removed for better readability on dark bg if image fails */
+             text-shadow: 0 0 5px #fff, 0 0 10px #8a2be2, 0 0 20px #4b0082;
+             font-weight: bold;
+             animation: cosmic-pulse 3s infinite alternate;
+        }
 
         @keyframes mythic-shine {
             0% { background-position: 0% 50%; }
@@ -214,6 +225,11 @@
                 background-position: 0% 50%;
                 text-shadow: 0 0 10px var(--grade-grand-champion-glow1), 0 0 20px var(--grade-grand-champion-glow2);
             }
+        }
+        
+        @keyframes cosmic-pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px #8a2be2; transform: scale(1); }
+            100% { text-shadow: 0 0 15px #fff, 0 0 25px #ff00ff, 0 0 35px #4b0082; transform: scale(1.02); }
         }
 
         /* Stat Bar */
